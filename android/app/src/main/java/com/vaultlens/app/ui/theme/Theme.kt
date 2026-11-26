@@ -23,46 +23,64 @@ val Indigo400 = Color(0xFF818CF8)
 val Emerald600 = Color(0xFF059669)
 val Emerald400 = Color(0xFF34D399)
 
+// Minimal Studio palette: ink on white, one green accent for the privacy shield.
+val Ink = Color(0xFF111111)
+val Paper = Color(0xFFF6F6F6)
+val Hairline = Color(0xFFE6E6E6)
+val Mute = Color(0xFF6B6B6B)
+
 private val DarkColors = darkColorScheme(
-    primary = Indigo400,
-    onPrimary = DeepSlate950,
+    primary = Color.White,
+    onPrimary = Color(0xFF0A0A0A),
+    primaryContainer = Color(0xFF262626),
+    onPrimaryContainer = Color.White,
     secondary = Emerald400,
-    onSecondary = DeepSlate950,
-    background = DeepSlate950,
-    onBackground = Slate100,
-    surface = DeepSlate900,
-    onSurface = Slate100,
-    surfaceVariant = DeepSlate800,
-    onSurfaceVariant = Color(0xFF94A3B8),
-    outline = Color(0xFF334155)
+    onSecondary = Color(0xFF0A0A0A),
+    secondaryContainer = Color.White,
+    onSecondaryContainer = Color(0xFF0A0A0A),
+    background = Color(0xFF0A0A0A),
+    onBackground = Color(0xFFF5F5F5),
+    surface = Color(0xFF161616),
+    onSurface = Color(0xFFF5F5F5),
+    surfaceVariant = Color(0xFF222222),
+    onSurfaceVariant = Color(0xFFA3A3A3),
+    surfaceContainer = Color(0xFF1C1C1C),
+    outline = Color(0xFF2E2E2E),
+    outlineVariant = Color(0xFF3A3A3A)
 )
 
 private val LightColors = lightColorScheme(
-    primary = Indigo600,
+    primary = Ink,
     onPrimary = Color.White,
+    primaryContainer = Color(0xFFEDEDED),
+    onPrimaryContainer = Ink,
     secondary = Emerald600,
     onSecondary = Color.White,
-    background = Slate50,
-    onBackground = DeepSlate900,
+    secondaryContainer = Ink,
+    onSecondaryContainer = Color.White,
+    background = Paper,
+    onBackground = Ink,
     surface = Color.White,
-    onSurface = DeepSlate900,
-    surfaceVariant = Slate100,
-    onSurfaceVariant = Color(0xFF475569),
-    outline = Color(0xFFE2E8F0)
+    onSurface = Ink,
+    surfaceVariant = Color(0xFFEFEFEF),
+    onSurfaceVariant = Mute,
+    surfaceContainer = Color.White,
+    outline = Hairline,
+    outlineVariant = Color(0xFFD9D9D9)
 )
 
 private val VaultTypography = Typography(
     headlineMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp
+        fontSize = 28.sp,
+        lineHeight = 34.sp
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
+        fontSize = 17.sp,
+        lineHeight = 23.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -71,7 +89,7 @@ private val VaultTypography = Typography(
         lineHeight = 20.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
+        fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp

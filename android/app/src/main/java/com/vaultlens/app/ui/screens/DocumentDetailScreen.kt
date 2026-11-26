@@ -241,7 +241,7 @@ fun DocumentDetailScreen(
 @Composable
 private fun DetailBlock(title: String, lines: List<String>) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = Modifier.fillMaxWidth()

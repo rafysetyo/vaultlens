@@ -38,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -207,6 +208,7 @@ fun VaultDashboardScreen(
                 onClick = onOpenScanner,
                 icon = { Icon(Icons.Default.DocumentScanner, contentDescription = null) },
                 text = { Text("Scan or Paste Document") },
+                shape = RoundedCornerShape(28.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
@@ -216,7 +218,7 @@ fun VaultDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
@@ -263,7 +265,13 @@ fun VaultDashboardScreen(
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
                     placeholder = { Text("Search by title, folder, tags, or content...") },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search documents")
@@ -291,6 +299,7 @@ fun VaultDashboardScreen(
                         ) {
                             item {
                                 FilterChip(
+                                    shape = RoundedCornerShape(50),
                                     selected = selectedFolderFilter == "all",
                                     onClick = { selectedFolderFilter = "all" },
                                     label = { Text("All Folders (${documents.size})") }
@@ -299,6 +308,7 @@ fun VaultDashboardScreen(
                             item {
                                 val unfiledCount = documents.count { it.folderId !in folderById }
                                 FilterChip(
+                                    shape = RoundedCornerShape(50),
                                     selected = selectedFolderFilter == "unfiled",
                                     onClick = { selectedFolderFilter = "unfiled" },
                                     label = { Text("Unfiled ($unfiledCount)") }
@@ -307,6 +317,7 @@ fun VaultDashboardScreen(
                             items(folders, key = { it.id }) { folder ->
                                 val count = documents.count { it.folderId == folder.id }
                                 FilterChip(
+                                    shape = RoundedCornerShape(50),
                                     selected = selectedFolderFilter == folder.id,
                                     onClick = { selectedFolderFilter = folder.id },
                                     leadingIcon = {
@@ -372,6 +383,7 @@ fun VaultDashboardScreen(
                     ) {
                         item {
                             FilterChip(
+                                shape = RoundedCornerShape(50),
                                 selected = selectedCategory == null,
                                 onClick = { selectedCategory = null },
                                 label = { Text("All") }
@@ -379,6 +391,7 @@ fun VaultDashboardScreen(
                         }
                         items(DocumentCategory.entries) { category ->
                             FilterChip(
+                                shape = RoundedCornerShape(50),
                                 selected = selectedCategory == category,
                                 onClick = { selectedCategory = category },
                                 label = { Text(category.label) }
@@ -413,7 +426,7 @@ fun VaultDashboardScreen(
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(20.dp),
                         color = MaterialTheme.colorScheme.primaryContainer,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
@@ -493,7 +506,7 @@ fun VaultDashboardScreen(
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(20.dp),
                         color = MaterialTheme.colorScheme.surface,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
@@ -520,7 +533,7 @@ fun VaultDashboardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSelectDocument(doc) },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surface,
                     border = BorderStroke(
                         1.dp,
@@ -529,7 +542,7 @@ fun VaultDashboardScreen(
                     )
                 ) {
                     Row(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
@@ -583,7 +596,7 @@ fun VaultDashboardScreen(
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
