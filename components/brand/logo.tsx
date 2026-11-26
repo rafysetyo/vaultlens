@@ -1,39 +1,58 @@
+import { useId } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
- * VaultLens mark: a lens over a document. Two grey lines of text and one solid
- * block, the redaction, which is the only thing the cloud ever sees.
+ * VaultLens mark: a scan viewfinder around three document lines. The bright
+ * middle bar is the redaction, which is the only thing the cloud ever sees.
  *
- * The block is the same shape as the redaction bar in the hero. The colors are
- * neutral and fixed, so the mark never clashes with the accent (indigo in light
- * mode, teal in dark mode). The lens is filled with paper so the black block
- * stays visible on the dark tile. Keep app/icon.svg in sync with this file.
+ * This is the same mark as the Android app (android/.../VaultLogo.kt and
+ * res/drawable/ic_launcher_foreground.xml). The geometry uses the same grid
+ * (viewBox 22 22 64 64) and the colours are fixed brand colours, so the mark
+ * looks the same in light and dark mode. Keep public/icon.svg and
+ * app/apple-icon.tsx in sync with this file.
  */
 export function LogoMark({ className }: { className?: string }) {
+  // One gradient id per instance, so several logos on a page never share (or lose) a gradient.
+  const gradientId = `vl-${useId().replace(/:/g, '')}`
+
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox="22 22 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn('size-9', className)}
       aria-hidden="true"
     >
-      {/* tile: neutral ink, with a hairline so it stays visible on a dark page */}
+      <defs>
+        <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="30" y1="30" x2="78" y2="78">
+          <stop offset="0" stopColor="#1CC1AF" />
+          <stop offset="1" stopColor="#50D9EF" />
+        </linearGradient>
+      </defs>
+      {/* tile and hairline border */}
+      <rect x="22" y="22" width="64" height="64" rx="16.6" fill="#11131F" />
       <rect
-        x="0.5"
-        y="0.5"
-        width="39"
-        height="39"
-        rx="9.5"
-        className="fill-[#111113] stroke-transparent dark:stroke-white/20"
+        x="22.4"
+        y="22.4"
+        width="63.2"
+        height="63.2"
+        rx="16.2"
+        stroke="#FFFFFF"
+        strokeOpacity="0.1"
+        strokeWidth="0.8"
       />
-      {/* lens and handle */}
-      <circle cx="18" cy="18" r="12.5" fill="#fafafa" />
-      <path d="M27.2 27.2L33.6 33.6" stroke="#fafafa" strokeWidth="4.6" strokeLinecap="round" />
-      {/* document: two lines of text and the redaction block */}
-      <rect x="10.5" y="9.8" width="13" height="3" rx="1.5" fill="#a1a1aa" />
-      <rect x="10.5" y="15.4" width="15" height="5.2" rx="1.6" fill="#111113" />
-      <rect x="10.5" y="23.2" width="8.5" height="3" rx="1.5" fill="#a1a1aa" />
+      {/* viewfinder corners */}
+      <path
+        d="M31,44 V38 A7,7 0 0 1 38,31 H44 M64,31 H70 A7,7 0 0 1 77,38 V44 M77,64 V70 A7,7 0 0 1 70,77 H64 M44,77 H38 A7,7 0 0 1 31,70 V64"
+        stroke={`url(#${gradientId})`}
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* document: two muted lines of text and the redaction bar */}
+      <rect x="41" y="41.5" width="18" height="3.4" rx="1.7" fill="#E2E4EF" fillOpacity="0.55" />
+      <rect x="41" y="51" width="26" height="6" rx="2" fill="#E2E4EF" />
+      <rect x="41" y="63.1" width="12" height="3.4" rx="1.7" fill="#E2E4EF" fillOpacity="0.55" />
     </svg>
   )
 }
