@@ -1,0 +1,210 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidOptionalFolderId(folderId) {
+      return folderId is string && (folderId == '' || isValidId(folderId));
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // The app signs in anonymously, which has no email. Email accounts still need a verified email.
+    function isVerifiedUser() {
+      return isSignedIn()
+        && (request.auth.token.firebase.sign_in_provider == 'anonymous'
+            || request.auth.token.email_verified == true);
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'deviceCapability', 'preferredTheme', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'deviceCapability', 'preferredTheme', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.deviceCapability in ['gemini_nano_npu', 'cloud_fallback']
+        && data.preferredTheme in ['dark', 'light']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidVaultFolder(data, userId, folderId) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'color', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'color', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.id == folderId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 60
+        && data.color in ['indigo', 'emerald', 'amber', 'rose', 'slate']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStringList(arr, maxLen) {
+      return arr is list
+        && arr.size() <= maxLen
+        && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= 500));
+    }
+
+    function isValidTags(arr) {
+      return arr is list
+        && arr.size() <= 10
+        && (arr.size() == 0 || (arr[0] is string && arr[0].size() >= 1 && arr[0].size() <= 40));
+    }
+
+    function isValidRedactionLog(arr) {
+      return arr is list
+        && arr.size() <= 50
+        && (
+          arr.size() == 0 || (
+            arr[0] is map
+            && arr[0].keys().hasAll(['entityType', 'placeholder', 'engine'])
+            && arr[0].keys().hasOnly(['entityType', 'placeholder', 'engine'])
+            && arr[0].entityType is string && arr[0].entityType.size() <= 40
+            && arr[0].placeholder is string && arr[0].placeholder.size() <= 60
+            && arr[0].engine is string && arr[0].engine.size() <= 40
+          )
+        );
+    }
+
+    function isValidVaultDocument(data, userId, docId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'category', 'sourceType',
+          'sanitizedText', 'piiRedactedCount', 'redactionLog',
+          'inferenceRoute', 'analysisStatus', 'documentSummary',
+          'keyDatesAndDeadlines', 'financialAmounts', 'redFlagsAndRisks',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'category', 'folderId', 'sourceType',
+          'sanitizedText', 'piiRedactedCount', 'redactionLog',
+          'inferenceRoute', 'analysisStatus', 'documentSummary',
+          'keyDatesAndDeadlines', 'financialAmounts', 'redFlagsAndRisks',
+          'tags', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == docId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.category in ['Contract', 'ID/Passport', 'Invoice', 'Legal']
+        && (!('folderId' in data) || isValidOptionalFolderId(data.folderId))
+        && data.sourceType in ['ocr_scan', 'pasted_text', 'sample']
+        && data.sanitizedText is string && data.sanitizedText.size() >= 1 && data.sanitizedText.size() <= 50000
+        && data.piiRedactedCount is int && data.piiRedactedCount >= 0 && data.piiRedactedCount <= 1000
+        && isValidRedactionLog(data.redactionLog)
+        && data.inferenceRoute in ['on_device_nano', 'cloud_fallback_flash']
+        && data.analysisStatus in ['analyzed', 'queued_offline', 'local_only']
+        && data.documentSummary is string && data.documentSummary.size() <= 4000
+        && isValidStringList(data.keyDatesAndDeadlines, 25)
+        && isValidStringList(data.financialAmounts, 25)
+        && isValidStringList(data.redFlagsAndRisks, 25)
+        && (!('tags' in data) || isValidTags(data.tags))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['deviceCapability', 'preferredTheme', 'updatedAt']);
+      allow delete: if false;
+
+      match /folders/{folderId} {
+        allow get: if isValidId(userId) && isValidId(folderId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(folderId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidVaultFolder(incoming(), userId, folderId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(folderId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidVaultFolder(incoming(), userId, folderId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'color', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(folderId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+      }
+
+      match /documents/{documentId} {
+        allow get: if isValidId(userId) && isValidId(documentId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(documentId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidVaultDocument(incoming(), userId, documentId)
+          && 'tags' in incoming()
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(documentId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidVaultDocument(incoming(), userId, documentId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            (
+              existing().analysisStatus == 'queued_offline'
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'analysisStatus', 'inferenceRoute', 'documentSummary',
+                'keyDatesAndDeadlines', 'financialAmounts', 'redFlagsAndRisks', 'tags', 'updatedAt'
+              ])
+            )
+            ||
+            (
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'category', 'folderId', 'tags', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(documentId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+      }
+    }
+  }
+}

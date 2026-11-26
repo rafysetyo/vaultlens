@@ -1,0 +1,185 @@
+{
+  "entities": {
+    "UserVaultProfile": {
+      "title": "UserVaultProfile",
+      "description": "User preferences and device routing configuration for VaultLens.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "deviceCapability": {
+          "type": "string",
+          "enum": ["gemini_nano_npu", "cloud_fallback"]
+        },
+        "preferredTheme": {
+          "type": "string",
+          "enum": ["dark", "light"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "deviceCapability", "preferredTheme", "createdAt", "updatedAt"]
+    },
+    "VaultFolder": {
+      "title": "VaultFolder",
+      "description": "Custom user-created folder for organizing sanitized vault documents.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "color": {
+          "type": "string",
+          "enum": ["indigo", "emerald", "amber", "rose", "slate"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "color", "createdAt", "updatedAt"]
+    },
+    "VaultDocument": {
+      "title": "VaultDocument",
+      "description": "Sanitized document record with local PII redaction log and Gemini cloud insights. Raw PII is strictly excluded.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Contract", "ID/Passport", "Invoice", "Legal"]
+        },
+        "folderId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^$|^[a-zA-Z0-9_\\-]+$"
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["ocr_scan", "pasted_text", "sample"]
+        },
+        "sanitizedText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50000
+        },
+        "piiRedactedCount": {
+          "type": "integer"
+        },
+        "redactionLog": {
+          "type": "array",
+          "description": "Bounded log of redacted entity categories and placeholder tokens without raw values."
+        },
+        "inferenceRoute": {
+          "type": "string",
+          "enum": ["on_device_nano", "cloud_fallback_flash"]
+        },
+        "analysisStatus": {
+          "type": "string",
+          "enum": ["analyzed", "queued_offline", "local_only"]
+        },
+        "documentSummary": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "keyDatesAndDeadlines": {
+          "type": "array"
+        },
+        "financialAmounts": {
+          "type": "array"
+        },
+        "redFlagsAndRisks": {
+          "type": "array"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Up to 10 concise content-derived tags (max 40 chars each)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "category",
+        "sourceType",
+        "sanitizedText",
+        "piiRedactedCount",
+        "redactionLog",
+        "inferenceRoute",
+        "analysisStatus",
+        "documentSummary",
+        "keyDatesAndDeadlines",
+        "financialAmounts",
+        "redFlagsAndRisks",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserVaultProfile" },
+      "description": "User vault profile storing theme and hybrid device capability preferences."
+    },
+    "/users/{userId}/folders/{folderId}": {
+      "schema": { "$ref": "#/entities/VaultFolder" },
+      "description": "Per-user custom folders for organizing sanitized vault documents."
+    },
+    "/users/{userId}/documents/{documentId}": {
+      "schema": { "$ref": "#/entities/VaultDocument" },
+      "description": "Per-user sanitized document summaries and offline-queued analysis records."
+    }
+  }
+}
