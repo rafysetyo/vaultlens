@@ -1,3 +1,6 @@
+import { ArrowDown } from 'lucide-react'
+import { Frame, Section, SectionHeading } from './frame'
+
 const ROUTES = [
   {
     device: 'Pixel with AICore',
@@ -21,49 +24,36 @@ const ROUTES = [
 
 export function Routing() {
   return (
-    <section className="grid gap-10 border-b px-5 py-16 lg:grid-cols-[14rem_minmax(0,1fr)] lg:px-8">
-      <p className="text-sm text-muted-foreground">Hybrid, by device</p>
-      <div className="flex flex-col gap-6">
-        <h2 className="max-w-3xl text-balance text-3xl font-medium tracking-tight">
-          The privacy line never moves. <span className="text-muted-foreground">Only who draws it does.</span>
-        </h2>
-        <div className="overflow-x-auto rounded-2xl border bg-card">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th scope="col" className="px-5 py-3.5 font-medium">
-                  Device
-                </th>
-                <th scope="col" className="px-3 py-3.5 font-medium">
-                  Finds identifiers
-                </th>
-                <th scope="col" className="px-3 py-3.5 font-medium">
-                  Reasons over clauses
-                </th>
-                <th scope="col" className="px-5 py-3.5 font-medium">
-                  Why it matters
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROUTES.map((route) => (
-                <tr key={route.device} className="border-b last:border-b-0">
-                  <th scope="row" className="px-5 py-4 text-left font-medium">
-                    {route.device}
-                  </th>
-                  <td className="px-3 py-4">
-                    <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{route.finds}</span>
-                  </td>
-                  <td className="px-3 py-4">
-                    <span className="rounded-md bg-accent px-2 py-0.5 font-mono text-xs text-accent-foreground">{route.reasons}</span>
-                  </td>
-                  <td className="px-5 py-4 text-muted-foreground">{route.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+    <Section>
+      <SectionHeading>
+        The privacy line never moves. <span className="text-muted-foreground">Only who draws it does.</span>
+      </SectionHeading>
+      <Frame>
+        <ul className="grid lg:grid-cols-3">
+          {ROUTES.map((route) => (
+            <li
+              key={route.device}
+              className="flex flex-col gap-6 border-b p-6 last:border-b-0 lg:border-r lg:border-b-0 lg:p-8 lg:last:border-r-0"
+            >
+              <h3 className="text-lg font-medium tracking-tight">{route.device}</h3>
+              <dl className="flex flex-col items-start gap-3">
+                <div className="flex flex-col items-start gap-1.5">
+                  <dt className="text-xs text-muted-foreground">Finds identifiers</dt>
+                  <dd className="max-w-full break-words rounded-md bg-muted px-2 py-1 font-mono text-xs">{route.finds}</dd>
+                </div>
+                <ArrowDown className="ml-3 size-3.5 text-muted-foreground" aria-hidden="true" />
+                <div className="flex flex-col items-start gap-1.5">
+                  <dt className="text-xs text-muted-foreground">Reasons over clauses</dt>
+                  <dd className="max-w-full break-words rounded-md bg-accent px-2 py-1 font-mono text-xs text-accent-foreground">
+                    {route.reasons}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-auto text-sm leading-relaxed text-muted-foreground">{route.note}</p>
+            </li>
+          ))}
+        </ul>
+      </Frame>
+    </Section>
   )
 }

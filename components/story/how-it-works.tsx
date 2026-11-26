@@ -1,3 +1,6 @@
+import { ArrowRight } from 'lucide-react'
+import { Frame, Section, SectionHeading } from './frame'
+
 const STEPS = [
   {
     n: '01',
@@ -27,23 +30,35 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="flex flex-col gap-10 border-b px-5 py-16 lg:px-8">
-      <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <p className="text-sm text-muted-foreground">How it works</p>
-        <h2 className="max-w-3xl text-balance text-3xl font-medium tracking-tight lg:text-4xl">
-          Models find. Code redacts. The cloud reasons on placeholders. <span className="text-muted-foreground">The original never leaves.</span>
-        </h2>
-      </div>
-      <ol className="grid overflow-hidden rounded-2xl border bg-card md:grid-cols-2 xl:grid-cols-4">
-        {STEPS.map((step) => (
-          <li key={step.n} className="flex flex-col gap-3 border-b p-5 md:border-r xl:border-b-0 xl:last:border-r-0">
-            <span className="font-mono text-xs text-primary">{step.n}</span>
-            <h3 className="text-lg font-medium tracking-tight">{step.title}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-            <p className="mt-auto pt-2 font-mono text-[11px] text-muted-foreground">{step.where}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
+    <Section id="how">
+      <SectionHeading>
+        Models find. Code redacts. The cloud reasons on placeholders. <span className="text-muted-foreground">The original never leaves.</span>
+      </SectionHeading>
+      <Frame>
+        <ol className="grid md:grid-cols-2 xl:grid-cols-4">
+          {STEPS.map((step, index) => (
+            <li
+              key={step.n}
+              className="relative flex flex-col gap-3 border-b p-6 last:border-b-0 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 lg:p-8 xl:border-r xl:border-b-0 xl:last:border-r-0"
+            >
+              <span className="font-mono text-xs text-primary">{step.n}</span>
+              <h3 className="text-lg font-medium tracking-tight">{step.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+              <code className="mt-auto w-fit max-w-full break-words rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                {step.where}
+              </code>
+              {index < STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-[1.625rem] right-0 z-10 hidden size-7 translate-x-1/2 items-center justify-center rounded-full border bg-card text-muted-foreground shadow-sm xl:flex"
+                >
+                  <ArrowRight className="size-3.5" />
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </Frame>
+    </Section>
   )
 }

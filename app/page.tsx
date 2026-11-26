@@ -21,7 +21,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-dvh p-2 sm:p-4 lg:p-8">
-      <div className="mx-auto max-w-[1440px] overflow-hidden rounded-[28px] border bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)]">
+      <div className="mx-auto max-w-[1440px] overflow-hidden rounded-[28px] border bg-background shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_-24px_rgba(17,148,134,0.35)]">
         <SiteHeader />
         <main>
           <Hero contract={contract} />
