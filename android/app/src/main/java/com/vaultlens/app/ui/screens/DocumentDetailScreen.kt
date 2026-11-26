@@ -20,7 +20,16 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.vaultlens.app.ui.components.PillChip
+import com.vaultlens.app.ui.components.VaultCard
+import com.vaultlens.app.ui.components.VaultTopBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -140,25 +149,28 @@ fun DocumentDetailScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(document.title, maxLines = 1) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { VaultTopBar(title = "Document", onBack = onBack) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            Text(
+                text = document.title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "$folderName · ${document.category.label} · ${document.piiRedactedCount} PII redacted",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             HybridPrivacyBadge(
                 route = document.inferenceRoute,
                 piiSanitizedCount = document.piiRedactedCount,
@@ -170,13 +182,13 @@ fun DocumentDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    FilterChip(
+                    PillChip(
                         selected = document.folderId.isEmpty(),
                         onClick = { onChangeFolder(document.id, "") },
                         label = { Text("Unfiled") }
                     )
                     folders.forEach { folder ->
-                        FilterChip(
+                        PillChip(
                             selected = document.folderId == folder.id,
                             onClick = { onChangeFolder(document.id, folder.id) },
                             label = { Text(folder.name) }
@@ -186,11 +198,21 @@ fun DocumentDetailScreen(
             }
 
             if (document.tags.isNotEmpty()) {
-                Text(
-                    text = "Tags: ${document.tags.joinToString(" · ")}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    document.tags.forEach { tag ->
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                            Text(
+                                text = tag,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+                }
             }
 
             DetailBlock("Document Summary", listOf(document.documentSummary))
@@ -211,7 +233,9 @@ fun DocumentDetailScreen(
                         .ifEmpty { "vaultlens-document" }
                     createJsonLauncher.launch("$slug-secure-summary.json")
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
             ) {
                 Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -222,13 +246,16 @@ fun DocumentDetailScreen(
                 Text(
                     text = status,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
 
             OutlinedButton(
                 onClick = ::shareSafeSummary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Icon(Icons.Default.Share, contentDescription = null)
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -240,20 +267,30 @@ fun DocumentDetailScreen(
 
 @Composable
 private fun DetailBlock(title: String, lines: List<String>) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+    VaultCard {
+        Column(modifier = Modifier.padding(18.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(6.dp))
-            if (lines.isEmpty()) {
-                Text("None detected.", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (lines.isEmpty() || lines.all { it.isBlank() }) {
+                Text(
+                    "None detected.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             } else {
-                lines.forEach { line ->
-                    Text("• $line", style = MaterialTheme.typography.bodyMedium)
+                lines.filter { it.isNotBlank() }.forEach { line ->
+                    Row(
+                        modifier = Modifier.padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 7.dp)
+                                .size(6.dp)
+                                .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+                        )
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
         }

@@ -63,7 +63,11 @@ import com.vaultlens.app.data.model.VaultDocument
 import com.vaultlens.app.data.model.VaultFolder
 import com.vaultlens.app.data.ocr.LocalOcrProcessor
 import com.vaultlens.app.ui.components.HybridPrivacyBadge
-import com.vaultlens.app.ui.theme.Emerald400
+import com.vaultlens.app.ui.theme.Emerald600
+import com.vaultlens.app.ui.components.PillChip
+import com.vaultlens.app.ui.components.VaultTopBar
+import com.vaultlens.app.ui.components.vaultFieldColors
+import androidx.compose.material3.ButtonDefaults
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
@@ -178,23 +182,15 @@ fun SanitizerAnalyzerScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Privacy Sanitizer & Analyzer") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { VaultTopBar(title = "Scan & Sanitize", onBack = onBack) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             HybridPrivacyBadge(
@@ -204,15 +200,19 @@ fun SanitizerAnalyzerScreen(
             )
 
             OutlinedTextField(
+                colors = vaultFieldColors(),
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Document Title") },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 DocumentCategory.entries.forEach { item ->
-                    FilterChip(
+                    PillChip(
                         selected = category == item,
                         onClick = {
                             category = item
@@ -235,13 +235,13 @@ fun SanitizerAnalyzerScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    FilterChip(
+                    PillChip(
                         selected = selectedFolderId.isEmpty(),
                         onClick = { selectedFolderId = "" },
                         label = { Text("Unfiled") }
                     )
                     folders.forEach { folder ->
-                        FilterChip(
+                        PillChip(
                             selected = selectedFolderId == folder.id,
                             onClick = { selectedFolderId = folder.id },
                             label = { Text(folder.name) }
@@ -256,7 +256,8 @@ fun SanitizerAnalyzerScreen(
             ) {
                 OutlinedButton(
                     onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Icon(Icons.Default.PhotoCamera, contentDescription = null)
                     Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -264,7 +265,8 @@ fun SanitizerAnalyzerScreen(
                 }
                 OutlinedButton(
                     onClick = { imagePicker.launch("image/*") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Icon(Icons.Default.PhotoLibrary, contentDescription = null)
                     Spacer(modifier = Modifier.padding(horizontal = 4.dp))
@@ -273,6 +275,7 @@ fun SanitizerAnalyzerScreen(
             }
 
             OutlinedTextField(
+                colors = vaultFieldColors(),
                 value = rawText,
                 onValueChange = { rawText = it },
                 label = { Text("Raw Sensitive Document Text (Stays On-Device)") },
@@ -283,19 +286,20 @@ fun SanitizerAnalyzerScreen(
             Button(
                 onClick = { applyLocalRedaction(rawText) },
                 enabled = rawText.isNotBlank() && !isBusy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
             ) {
                 Text("Step 1: Redact PII Locally")
             }
 
             redactionResult?.let { result ->
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -323,12 +327,11 @@ fun SanitizerAnalyzerScreen(
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -341,7 +344,7 @@ fun SanitizerAnalyzerScreen(
                                 Icon(
                                     Icons.Default.Lock,
                                     contentDescription = null,
-                                    tint = Emerald400
+                                    tint = Emerald600
                                 )
                                 Text(
                                     text = "Outbound Cloud Payload (Zero-Leak Proof)",
@@ -369,13 +372,12 @@ fun SanitizerAnalyzerScreen(
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
@@ -409,7 +411,7 @@ fun SanitizerAnalyzerScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             suggestedTags.forEach { tag ->
-                                FilterChip(
+                                PillChip(
                                     selected = tag in selectedTags,
                                     onClick = { toggleTag(tag) },
                                     label = { Text(tag) }
@@ -423,6 +425,7 @@ fun SanitizerAnalyzerScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             OutlinedTextField(
+                colors = vaultFieldColors(),
                                 value = customTagInput,
                                 onValueChange = { if (it.length <= 40) customTagInput = it },
                                 label = { Text("Add custom tag") },
@@ -496,7 +499,9 @@ fun SanitizerAnalyzerScreen(
                         }
                     },
                     enabled = !isBusy,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
                 ) {
                     Text(
                         if (isOnline) "Step 2: Analyze Sanitized Text (Gemini Flash)"
@@ -523,8 +528,8 @@ private fun highlightRedactedTokens(text: String): AnnotatedString {
         pattern.findAll(text).forEach { match ->
             addStyle(
                 style = SpanStyle(
-                    color = Emerald400,
-                    background = Color(0x2610B981),
+                    color = Emerald600,
+                    background = Color(0x1A059669),
                     fontWeight = FontWeight.Bold
                 ),
                 start = match.range.first,
@@ -537,12 +542,11 @@ private fun highlightRedactedTokens(text: String): AnnotatedString {
 @Composable
 private fun InsightSectionCard(title: String, items: List<String>) {
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(6.dp))
             items.forEach { item ->
