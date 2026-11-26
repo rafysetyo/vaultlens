@@ -77,7 +77,7 @@ fun HybridPrivacyBadge(
                     modifier = Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(if (isOnline) scheme.onSurface else scheme.onSurfaceVariant)
+                        .background(if (isOnline) scheme.primary else scheme.onSurfaceVariant)
                 )
                 Text(
                     text = if (isOnline) "Active" else "Offline",

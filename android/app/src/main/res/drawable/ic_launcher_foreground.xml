@@ -1,28 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- VaultLens mark: lens ring over three document lines; the indigo line is the redaction. -->
+<!--
+  VaultLens mark: a scan viewfinder around three document lines.
+  The bright middle bar is the redaction. Teal to cyan comes from the chart-1 and chart-2 tokens (dark theme)
+  in globals.css. Keep the geometry in sync with VaultLogo.kt (same 108 x 108 grid).
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Viewfinder corners -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.2"
-        android:pathData="M35,54 A19,19 0 1,1 73,54 A19,19 0 1,1 35,54 Z" />
-    <path
-        android:fillColor="#8CFFFFFF"
-        android:pathData="M44.6,43.2 H58.6 A1.9,1.9 0 0,1 58.6,47 H44.6 A1.9,1.9 0 0,1 44.6,43.2 Z" />
-    <path
-        android:fillColor="#4F46E5"
-        android:pathData="M44.8,50.6 H64.6 A2,2 0 0,1 66.6,52.6 V54.8 A2,2 0 0,1 64.6,56.8 H44.8 A2,2 0 0,1 42.8,54.8 V52.6 A2,2 0 0,1 44.8,50.6 Z" />
-    <path
-        android:fillColor="#8CFFFFFF"
-        android:pathData="M44.6,60.4 H52.4 A1.9,1.9 0 0,1 52.4,64.2 H44.6 A1.9,1.9 0 0,1 44.6,60.4 Z" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.4"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
-        android:pathData="M68,68 L75,75" />
+        android:strokeLineJoin="round"
+        android:pathData="M31,44 V38 A7,7 0 0 1 38,31 H44 M64,31 H70 A7,7 0 0 1 77,38 V44 M77,64 V70 A7,7 0 0 1 70,77 H64 M44,77 H38 A7,7 0 0 1 31,70 V64">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="30"
+                android:startY="30"
+                android:endX="78"
+                android:endY="78">
+                <item android:offset="0.0" android:color="#FF1CC1AF" />
+                <item android:offset="1.0" android:color="#FF50D9EF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Text line (muted) -->
+    <path
+        android:fillColor="#8CE2E4EF"
+        android:pathData="M42.7,41.5 H57.3 A1.7,1.7 0 0 1 59,43.2 V43.2 A1.7,1.7 0 0 1 57.3,44.9 H42.7 A1.7,1.7 0 0 1 41,43.2 V43.2 A1.7,1.7 0 0 1 42.7,41.5 Z" />
+    <!-- Redaction bar (ink token) -->
+    <path
+        android:fillColor="#FFE2E4EF"
+        android:pathData="M43,51 H65 A2,2 0 0 1 67,53 V55 A2,2 0 0 1 65,57 H43 A2,2 0 0 1 41,55 V53 A2,2 0 0 1 43,51 Z" />
+    <!-- Text line (muted) -->
+    <path
+        android:fillColor="#8CE2E4EF"
+        android:pathData="M42.7,63.1 H51.3 A1.7,1.7 0 0 1 53,64.8 V64.8 A1.7,1.7 0 0 1 51.3,66.5 H42.7 A1.7,1.7 0 0 1 41,64.8 V64.8 A1.7,1.7 0 0 1 42.7,63.1 Z" />
 </vector>

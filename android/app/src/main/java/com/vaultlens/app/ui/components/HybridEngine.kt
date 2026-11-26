@@ -1,5 +1,6 @@
 package com.vaultlens.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -165,7 +166,7 @@ private fun StatusDot(text: String, active: Boolean) {
             modifier = Modifier
                 .size(6.dp)
                 .clip(CircleShape)
-                .background(if (active) scheme.onSurface else scheme.outline)
+                .background(if (active) scheme.primary else scheme.outline)
         )
         Text(
             text = text,
@@ -225,7 +226,10 @@ fun HybridPipeline(
                                 .padding(top = 17.dp)
                                 .width(12.dp)
                                 .height(1.dp)
-                                .background(MaterialTheme.colorScheme.outline)
+                                .background(
+                                    if (index < activeIndex) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline
+                                )
                         )
                     }
                 }
@@ -272,11 +276,21 @@ private fun PipelineStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        // Done: solid primary with a check. Current: accent fill with a primary ring. Next: muted.
         Surface(
             modifier = Modifier.size(36.dp),
             shape = CircleShape,
-            color = if (done || current) scheme.primary else scheme.surfaceVariant,
-            contentColor = if (done || current) scheme.onPrimary else scheme.onSurfaceVariant
+            color = when {
+                done -> scheme.primary
+                current -> scheme.primaryContainer
+                else -> scheme.surfaceVariant
+            },
+            contentColor = when {
+                done -> scheme.onPrimary
+                current -> scheme.onPrimaryContainer
+                else -> scheme.onSurfaceVariant
+            },
+            border = if (current) BorderStroke(1.5.dp, scheme.primary) else null
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (done) {

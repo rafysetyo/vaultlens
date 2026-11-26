@@ -2,7 +2,9 @@ package com.vaultlens.app.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -84,6 +87,10 @@ import com.vaultlens.app.ui.components.SectionHeader
 import com.vaultlens.app.ui.components.VaultCard
 import com.vaultlens.app.ui.components.VaultMark
 import com.vaultlens.app.ui.components.vaultFieldColors
+import com.vaultlens.app.ui.theme.BrandCyan
+import com.vaultlens.app.ui.theme.BrandInk
+import com.vaultlens.app.ui.theme.BrandTeal
+import com.vaultlens.app.ui.theme.BrandTile
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -261,6 +268,7 @@ fun VaultDashboardScreen(
                                 color = scheme.onBackground
                             )
                         }
+                        ConnectionPill(isOnline = isOnline)
                     }
                 }
 
@@ -623,28 +631,66 @@ fun VaultDashboardScreen(
     }
 }
 
-/** Black "card" hero, in the spirit of the credit-card reference, without colour. */
+/** Small pill in the header: primary dot when online, muted dot when offline. */
+@Composable
+private fun ConnectionPill(isOnline: Boolean) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = CircleShape,
+        color = scheme.surface,
+        contentColor = scheme.onSurface,
+        border = BorderStroke(1.dp, scheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .height(32.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(if (isOnline) scheme.primary else scheme.onSurfaceVariant)
+            )
+            Text(
+                text = if (isOnline) "Online" else "Offline",
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+            )
+        }
+    }
+}
+
+/**
+ * Brand hero: violet-black card with the same teal and cyan glow as the web app's dark background.
+ * It stays dark in both themes. The three bars bottom right echo the logo (middle line redacted).
+ */
 @Composable
 private fun VaultHeroCard(documentCount: Int) {
+    val shape = MaterialTheme.shapes.extraLarge
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(196.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFF2B2B2E),
-                        Color(0xFF161618),
-                        Color(0xFF0B0B0C),
-                        Color(0xFF1E1E21)
-                    ),
-                    start = Offset.Zero,
-                    end = Offset.Infinite
-                )
-            )
+            .clip(shape)
+            .background(BrandTile)
             .drawBehind {
-                val ring = Color.White.copy(alpha = 0.10f)
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(BrandTeal.copy(alpha = 0.34f), Color.Transparent),
+                        center = Offset(size.width * 0.10f, 0f),
+                        radius = size.width * 0.80f
+                    )
+                )
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(BrandCyan.copy(alpha = 0.18f), Color.Transparent),
+                        center = Offset(size.width, size.height * 0.10f),
+                        radius = size.width * 0.60f
+                    )
+                )
+                val ring = BrandTeal.copy(alpha = 0.16f)
                 listOf(0.52f, 0.62f, 0.72f).forEachIndexed { i, r ->
                     drawCircle(
                         color = ring,
@@ -654,6 +700,7 @@ private fun VaultHeroCard(documentCount: Int) {
                     )
                 }
             }
+            .border(1.dp, Color.White.copy(alpha = 0.10f), shape)
     ) {
         Column(
             modifier = Modifier
@@ -662,20 +709,18 @@ private fun VaultHeroCard(documentCount: Int) {
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "vaultlens",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.6).sp
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = BrandTeal,
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "PRIVATE",
-                    color = Color.White.copy(alpha = 0.7f),
+                    text = "PRIVATE VAULT",
+                    color = BrandInk.copy(alpha = 0.75f),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.4.sp
@@ -700,18 +745,38 @@ private fun VaultHeroCard(documentCount: Int) {
                         fontSize = 13.sp
                     )
                 }
-                Text(
-                    text = "vault",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Column(
+                    modifier = Modifier.padding(bottom = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(34.dp)
+                            .height(6.dp)
+                            .clip(CircleShape)
+                            .background(BrandInk.copy(alpha = 0.45f))
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(52.dp)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(BrandInk)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .height(6.dp)
+                            .clip(CircleShape)
+                            .background(BrandInk.copy(alpha = 0.45f))
+                    )
+                }
             }
         }
     }
 }
 
-/** White summary card, like "Current balance" in the reference. */
+/** Summary card: redaction totals, risk count and analysis progress. */
 @Composable
 private fun OverviewCard(
     piiRedacted: Int,
@@ -746,12 +811,13 @@ private fun OverviewCard(
                         .padding(horizontal = 16.dp)
                         .width(1.dp)
                         .fillMaxHeight()
-                        .background(scheme.outline)
+                        .background(scheme.outlineVariant)
                 )
                 OverviewStat(
                     value = flagged.toString(),
                     label = "Documents with risks",
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    valueColor = if (flagged > 0) scheme.error else scheme.onSurface
                 )
             }
             Spacer(modifier = Modifier.height(18.dp))
@@ -767,7 +833,7 @@ private fun OverviewCard(
                         .fillMaxWidth(progress)
                         .fillMaxHeight()
                         .clip(CircleShape)
-                        .background(scheme.onSurface)
+                        .background(scheme.primary)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -791,12 +857,17 @@ private fun OverviewCard(
 }
 
 @Composable
-private fun OverviewStat(value: String, label: String, modifier: Modifier = Modifier) {
+private fun OverviewStat(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
+) {
     Column(modifier = modifier) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 38.sp),
-            color = MaterialTheme.colorScheme.onSurface
+            color = valueColor
         )
         Text(
             text = label,
@@ -883,10 +954,20 @@ private fun DocumentRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant
             )
+            val riskCount = doc.redFlagsAndRisks.size
             Text(
-                text = if (queued) "Queued" else "Analyzed",
+                text = when {
+                    queued -> "Queued"
+                    riskCount == 1 -> "1 risk"
+                    riskCount > 1 -> "$riskCount risks"
+                    else -> "Analyzed"
+                },
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                color = if (queued) scheme.onSurfaceVariant else scheme.onSurface
+                color = when {
+                    queued -> scheme.onSurfaceVariant
+                    riskCount > 0 -> scheme.error
+                    else -> scheme.onSurface
+                }
             )
         }
     }

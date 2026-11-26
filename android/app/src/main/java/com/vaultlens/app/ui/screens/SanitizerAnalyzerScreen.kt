@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -33,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -63,6 +65,7 @@ import com.vaultlens.app.data.model.RedactionResult
 import com.vaultlens.app.data.model.VaultDocument
 import com.vaultlens.app.data.model.VaultFolder
 import com.vaultlens.app.data.ocr.LocalOcrProcessor
+import com.vaultlens.app.ui.components.FindingLine
 import com.vaultlens.app.ui.components.HairlineDivider
 import com.vaultlens.app.ui.components.HybridPipeline
 import com.vaultlens.app.ui.components.NanoState
@@ -74,6 +77,7 @@ import com.vaultlens.app.ui.components.SectionCaption
 import com.vaultlens.app.ui.components.VaultCard
 import com.vaultlens.app.ui.components.VaultTopBar
 import com.vaultlens.app.ui.components.vaultFieldColors
+import com.vaultlens.app.ui.theme.vaultExtras
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
@@ -342,15 +346,22 @@ fun SanitizerAnalyzerScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = if (showOriginal) {
-                                AnnotatedString(result.originalText)
-                            } else {
-                                highlightRedactedTokens(result.sanitizedText)
-                            },
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onSurface
-                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.small,
+                            color = scheme.surfaceVariant
+                        ) {
+                            Text(
+                                text = if (showOriginal) {
+                                    AnnotatedString(result.originalText)
+                                } else {
+                                    highlightRedactedTokens(result.sanitizedText)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = scheme.onSurface,
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
                     }
                 }
 
@@ -387,11 +398,18 @@ fun SanitizerAnalyzerScreen(
                                 put("sanitizedText", result.sanitizedText)
                             }.toString(2)
                             Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = proofJson,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = scheme.onSurfaceVariant
-                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.small,
+                                color = scheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = proofJson,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = scheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(14.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -456,8 +474,8 @@ fun SanitizerAnalyzerScreen(
                                 focusedContainerColor = scheme.surfaceVariant,
                                 unfocusedContainerColor = scheme.surfaceVariant,
                                 unfocusedBorderColor = Color.Transparent,
-                                focusedBorderColor = scheme.onSurface,
-                                cursorColor = scheme.onSurface
+                                focusedBorderColor = scheme.primary,
+                                cursorColor = scheme.primary
                             ),
                             trailingIcon = {
                                 IconButton(
@@ -541,7 +559,7 @@ fun SanitizerAnalyzerScreen(
                 InsightSectionCard("Summary", listOf(insight.documentSummary))
                 InsightSectionCard("Key dates & deadlines", insight.keyDatesAndDeadlines)
                 InsightSectionCard("Financial amounts", insight.financialAmounts)
-                InsightSectionCard("Red flags & risks", insight.redFlagsAndRisks)
+                InsightSectionCard("Red flags & risks", insight.redFlagsAndRisks, danger = true)
             }
         }
     }
@@ -584,25 +602,25 @@ private fun SourceRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Text(
-            text = "›",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
 private fun highlightRedactedTokens(text: String): AnnotatedString {
-    val scheme = MaterialTheme.colorScheme
+    val extras = MaterialTheme.vaultExtras
     val pattern = Regex("""\[REDACTED_[A-Z_]+]""")
     return buildAnnotatedString {
         append(text)
         pattern.findAll(text).forEach { match ->
             addStyle(
                 style = SpanStyle(
-                    color = scheme.surface,
-                    background = scheme.onSurface,
+                    color = extras.onInk,
+                    background = extras.ink,
                     fontWeight = FontWeight.Bold
                 ),
                 start = match.range.first,
@@ -613,28 +631,37 @@ private fun highlightRedactedTokens(text: String): AnnotatedString {
 }
 
 @Composable
-private fun InsightSectionCard(title: String, items: List<String>) {
+private fun InsightSectionCard(title: String, items: List<String>, danger: Boolean = false) {
     val lines = items.filter { it.isNotBlank() }
+    val scheme = MaterialTheme.colorScheme
+    val flagged = danger && lines.isNotEmpty()
     VaultCard {
         Column(modifier = Modifier.padding(18.dp)) {
-            SectionCaption(text = title)
+            SectionCaption(
+                text = title,
+                color = if (flagged) scheme.error else scheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(10.dp))
             if (lines.isEmpty()) {
                 Text(
                     "None detected.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = scheme.onSurfaceVariant
                 )
             }
             lines.forEachIndexed { index, item ->
                 if (index > 0) {
                     HairlineDivider(modifier = Modifier.padding(vertical = 10.dp))
                 }
-                Text(
-                    item,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                if (flagged) {
+                    FindingLine(text = item, danger = true)
+                } else {
+                    Text(
+                        item,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSurface
+                    )
+                }
             }
         }
     }

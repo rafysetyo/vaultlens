@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -21,8 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import com.vaultlens.app.data.model.InferenceRoute
 import com.vaultlens.app.data.model.VaultDocument
 import com.vaultlens.app.data.model.VaultFolder
 import com.vaultlens.app.ui.components.CircleAction
+import com.vaultlens.app.ui.components.FindingLine
 import com.vaultlens.app.ui.components.HairlineDivider
 import com.vaultlens.app.ui.components.InferenceTrailCard
 import com.vaultlens.app.ui.components.MonoTag
@@ -162,6 +164,8 @@ fun DocumentDetailScreen(
         else -> "On-device · rules"
     }
     val statusLabel = if (document.analysisStatus == AnalysisStatus.QUEUED_OFFLINE) "Queued offline" else "Analyzed"
+    val isAnalyzed = document.analysisStatus == AnalysisStatus.ANALYZED
+    val riskCount = document.redFlagsAndRisks.size
 
     Scaffold(
         containerColor = scheme.background,
@@ -215,13 +219,30 @@ fun DocumentDetailScreen(
                                 color = scheme.onSurfaceVariant
                             )
                         }
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            MonoTag(text = routeLabel, inverted = true)
-                            MonoTag(text = statusLabel)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isAnalyzed) riskCount.toString() else "–",
+                                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 38.sp),
+                                color = when {
+                                    !isAnalyzed -> scheme.onSurfaceVariant
+                                    riskCount > 0 -> scheme.error
+                                    else -> scheme.onSurface
+                                }
+                            )
+                            Text(
+                                text = "Risks flagged",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
+                            )
                         }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MonoTag(text = routeLabel, inverted = true)
+                        MonoTag(text = statusLabel)
                     }
                 }
             }
@@ -285,7 +306,7 @@ fun DocumentDetailScreen(
             DetailBlock("Summary", listOf(document.documentSummary))
             DetailBlock("Key dates & deadlines", document.keyDatesAndDeadlines)
             DetailBlock("Financial amounts", document.financialAmounts)
-            DetailBlock("Red flags & risks", document.redFlagsAndRisks)
+            DetailBlock("Red flags & risks", document.redFlagsAndRisks, danger = true)
             DetailBlock(
                 "Local redaction log",
                 document.redactionLog.map { "${it.entityType}  →  ${it.placeholder}\n${it.engine}" },
@@ -296,14 +317,14 @@ fun DocumentDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     Icons.Default.Lock,
                     contentDescription = null,
                     tint = scheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 6.dp)
+                    modifier = Modifier.size(14.dp)
                 )
                 Text(
                     text = "Original text never leaves this device",
@@ -316,12 +337,21 @@ fun DocumentDetailScreen(
 }
 
 @Composable
-private fun DetailBlock(title: String, lines: List<String>, monospace: Boolean = false) {
+private fun DetailBlock(
+    title: String,
+    lines: List<String>,
+    monospace: Boolean = false,
+    danger: Boolean = false
+) {
     val visible = lines.filter { it.isNotBlank() }
     val scheme = MaterialTheme.colorScheme
+    val flagged = danger && visible.isNotEmpty()
     VaultCard {
         Column(modifier = Modifier.padding(18.dp)) {
-            SectionCaption(text = title)
+            SectionCaption(
+                text = title,
+                color = if (flagged) scheme.error else scheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(10.dp))
             if (visible.isEmpty()) {
                 Text(
@@ -334,15 +364,19 @@ private fun DetailBlock(title: String, lines: List<String>, monospace: Boolean =
                     if (index > 0) {
                         HairlineDivider(modifier = Modifier.padding(vertical = 10.dp))
                     }
-                    Text(
-                        text = line,
-                        style = if (monospace) {
-                            MaterialTheme.typography.labelMedium
-                        } else {
-                            MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
-                        },
-                        color = scheme.onSurface
-                    )
+                    if (flagged) {
+                        FindingLine(text = line, danger = true)
+                    } else {
+                        Text(
+                            text = line,
+                            style = if (monospace) {
+                                MaterialTheme.typography.labelMedium
+                            } else {
+                                MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
+                            },
+                            color = scheme.onSurface
+                        )
+                    }
                 }
             }
         }

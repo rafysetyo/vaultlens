@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CreateNewFolder
@@ -35,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Pill filter chip: solid black when selected, plain white when not. */
+/** Pill filter chip: primary colour when selected, card colour with a hairline when not. */
 @Composable
 fun PillChip(
     selected: Boolean,
@@ -63,7 +63,8 @@ fun PillChip(
             onCard -> scheme.surfaceVariant
             else -> scheme.surface
         },
-        contentColor = if (selected) scheme.onPrimary else scheme.onSurface
+        contentColor = if (selected) scheme.onPrimary else scheme.onSurface,
+        border = if (selected || onCard) null else BorderStroke(1.dp, scheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -81,7 +82,7 @@ fun PillChip(
     }
 }
 
-/** White rounded card used for grouped content. */
+/** Rounded card (the --card token) with a hairline border, used for grouped content. */
 @Composable
 fun VaultCard(
     modifier: Modifier = Modifier,
@@ -89,31 +90,36 @@ fun VaultCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(content = content)
     }
 }
 
-/** 1px separator used between list rows inside a card. */
+/** 1px separator used between list rows inside a card (the --border token). */
 @Composable
 fun HairlineDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(MaterialTheme.colorScheme.outline)
+            .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
 
 /** Small uppercase caption, e.g. "CATEGORY" or "TODAY, JUN 12". */
 @Composable
-fun SectionCaption(text: String, modifier: Modifier = Modifier) {
+fun SectionCaption(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = color,
         modifier = modifier
     )
 }
@@ -139,7 +145,7 @@ fun SectionHeader(
     }
 }
 
-/** Grey circle holding a line icon, used at the start of list rows. */
+/** Circle holding a line icon (accent tint, or solid primary when [filled]), used at the start of list rows. */
 @Composable
 fun IconBubble(
     icon: ImageVector,
@@ -153,31 +159,43 @@ fun IconBubble(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(if (filled) scheme.primary else scheme.surfaceVariant),
+            .background(if (filled) scheme.primary else scheme.primaryContainer),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = if (filled) scheme.onPrimary else scheme.onSurface,
+            tint = if (filled) scheme.onPrimary else scheme.onPrimaryContainer,
             modifier = Modifier.size(size * 0.45f)
         )
     }
 }
 
-/** Neutral grey tag ("7 PII redacted", "Analyzed", content tags). */
+/**
+ * Small pill tag ("7 PII redacted", "Analyzed", content tags).
+ * [inverted] is solid primary; [danger] is the red tint used for risks.
+ */
 @Composable
 fun MonoTag(
     text: String,
     modifier: Modifier = Modifier,
-    inverted: Boolean = false
+    inverted: Boolean = false,
+    danger: Boolean = false
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = if (inverted) scheme.primary else scheme.surfaceVariant,
-        contentColor = if (inverted) scheme.onPrimary else scheme.onSurface
+        color = when {
+            danger -> scheme.errorContainer
+            inverted -> scheme.primary
+            else -> scheme.surfaceVariant
+        },
+        contentColor = when {
+            danger -> scheme.onErrorContainer
+            inverted -> scheme.onPrimary
+            else -> scheme.onSurface
+        }
     ) {
         Text(
             text = text,
@@ -188,7 +206,7 @@ fun MonoTag(
     }
 }
 
-/** Round white icon button (back, share, new folder, ...). */
+/** Round card-coloured icon button (back, share, new folder, ...). */
 @Composable
 fun CircleIconButton(
     icon: ImageVector,
@@ -201,7 +219,8 @@ fun CircleIconButton(
         modifier = modifier.size(44.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(20.dp))
@@ -229,7 +248,8 @@ fun CircleAction(
             modifier = Modifier.size(60.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
@@ -255,7 +275,7 @@ fun NewFolderCircleButton(onClick: () -> Unit) {
     )
 }
 
-/** Solid black, full-width pill button. */
+/** Solid primary, full-width pill button. */
 @Composable
 fun PrimaryPillButton(
     text: String,
@@ -286,7 +306,7 @@ fun PrimaryPillButton(
     }
 }
 
-/** White, full-width pill button with no border. */
+/** Card-coloured, full-width pill button with a hairline border. */
 @Composable
 fun SecondaryPillButton(
     text: String,
@@ -302,7 +322,7 @@ fun SecondaryPillButton(
             .fillMaxWidth()
             .height(54.dp),
         shape = CircleShape,
-        border = BorderStroke(0.dp, MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -316,32 +336,10 @@ fun SecondaryPillButton(
     }
 }
 
-/** App mark: black rounded square with a white lens ring. */
+/** App mark. Same drawing as the launcher icon, see [VaultLogo]. */
 @Composable
 fun VaultMark(size: Dp = 44.dp) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(scheme.primary),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(size * 0.42f)
-                .clip(CircleShape)
-                .background(scheme.onPrimary),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(size * 0.22f)
-                    .clip(CircleShape)
-                    .background(scheme.primary)
-            )
-        }
-    }
+    VaultLogo(size = size)
 }
 
 /** Top bar: round back button, centred title, optional round action on the right. */
@@ -384,18 +382,47 @@ fun VaultTopBar(
     }
 }
 
+/** Text fields: card fill, --input border, primary border and cursor while focused (the --ring token). */
 @Composable
 fun vaultFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = MaterialTheme.colorScheme.surface,
     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
     disabledContainerColor = MaterialTheme.colorScheme.surface,
-    unfocusedBorderColor = MaterialTheme.colorScheme.surface,
-    focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-    cursorColor = MaterialTheme.colorScheme.onSurface,
-    focusedLabelColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
     focusedLeadingIconColor = MaterialTheme.colorScheme.onSurface,
     unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
 )
+
+/** One finding line with a leading dot. The dot is red for risks and a neutral grey otherwise. */
+@Composable
+fun FindingLine(
+    text: String,
+    modifier: Modifier = Modifier,
+    danger: Boolean = false
+) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(top = 7.dp)
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(if (danger) scheme.error else scheme.outline)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = scheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
