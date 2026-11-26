@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
+import { ThemeToggle } from '@/components/brand/theme-toggle'
 
 const LINKS = [
   { href: '#problem', label: 'The problem' },
@@ -22,9 +23,12 @@ export function SiteHeader() {
           </a>
         ))}
       </nav>
+      <span className="ml-auto md:ml-0">
+        <ThemeToggle />
+      </span>
       <Link
         href="/vault"
-        className="ml-auto inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 md:ml-0"
+        className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
       >
         Open the vault
         <ArrowRight className="size-4" aria-hidden="true" />

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { ChevronsUpDown, Cpu, FileText, LayoutGrid, ScanLine, Search, Smartphone, WifiOff } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
+import { ThemeToggle } from '@/components/brand/theme-toggle'
 import { Notifications } from '@/components/vault/notifications'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
@@ -134,6 +135,7 @@ export function VaultHeader({ view, onViewChange }: { view: VaultView; onViewCha
             /
           </kbd>
         </label>
+        <ThemeToggle />
         <Notifications />
         <span
           className="flex size-10 items-center justify-center rounded-full bg-ink text-sm font-medium text-primary-foreground"
