@@ -1,6 +1,6 @@
 import 'server-only'
 
-export const CLOUD_MODEL = 'google/gemini-2.5-flash'
+export const CLOUD_MODEL = 'google/gemini-3.8-flash'
 
 const ALLOWED_CATEGORIES = new Set(['Contract', 'ID/Passport', 'Invoice', 'Legal'])
 

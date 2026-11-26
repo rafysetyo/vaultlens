@@ -161,8 +161,22 @@ class HybridPrivacyRouter {
             $safeText
         """.trimIndent()
 
-        val response = cloudInsightModel.generateContent(prompt)
-        val json = JSONObject(response.text ?: "{}")
+        val json = try {
+            val response = cloudInsightModel.generateContent(prompt)
+            JSONObject(response.text ?: "{}")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Covers App Check, quota, network, and JSON parsing failures
+            android.util.Log.e("HybridPrivacyRouter", "Cloud analysis failed", e)
+            return CloudInsight(
+                documentSummary = "Cloud analysis is unavailable right now. Please try again later.",
+                keyDatesAndDeadlines = emptyList(),
+                financialAmounts = emptyList(),
+                redFlagsAndRisks = emptyList(),
+                suggestedTags = emptyList()
+            )
+        }
 
         fun JSONObject.stringList(key: String): List<String> {
             val arr = optJSONArray(key) ?: return emptyList()
@@ -189,6 +203,6 @@ class HybridPrivacyRouter {
     }
 
     private companion object {
-        const val CLOUD_MODEL = "gemini-2.5-flash"
+        const val CLOUD_MODEL = "gemini-3.8-flash"
     }
 }

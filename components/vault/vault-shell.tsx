@@ -32,7 +32,7 @@ export function VaultShell() {
           </main>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-4 text-xs text-muted-foreground lg:px-8">
             <span>Demo vault. Names in sample documents are fictional. Everything lives in this tab&apos;s memory and is gone on refresh.</span>
-            <span className="font-mono">cloud model · google/gemini-2.5-flash</span>
+            <span className="font-mono">cloud model · google/gemini-3.8-flash</span>
           </footer>
         </div>
       </div>

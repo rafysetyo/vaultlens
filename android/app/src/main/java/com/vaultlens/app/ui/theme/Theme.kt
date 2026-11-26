@@ -15,97 +15,155 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Legacy names, still referenced by other files.
-val DeepSlate950 = Color(0xFF0B1120)
-val DeepSlate900 = Color(0xFF111827)
-val DeepSlate800 = Color(0xFF1E293B)
-val Slate100 = Color(0xFFF1F5F9)
-val Slate50 = Color(0xFFF8FAFC)
+// Legacy names, kept so any other file that still imports them keeps compiling.
+// They are now mapped to neutral greys so nothing in the app turns colourful.
+val DeepSlate950 = Color(0xFF0A0A0A)
+val DeepSlate900 = Color(0xFF111111)
+val DeepSlate800 = Color(0xFF1C1C1C)
+val Slate100 = Color(0xFFF2F2F2)
+val Slate50 = Color(0xFFF7F7F7)
+val Indigo600 = Color(0xFF111111)
+val Indigo400 = Color(0xFF8A8A8A)
+val Emerald600 = Color(0xFF111111)
+val Emerald400 = Color(0xFFBDBDBD)
+val Lavender = Color(0xFFF0F0F0)
+val Violet = Color(0xFF111111)
+val VioletDeep = Color(0xFF000000)
 
-val Indigo600 = Color(0xFF4F46E5)
-val Indigo400 = Color(0xFF818CF8)
-val Emerald600 = Color(0xFF059669)
-val Emerald400 = Color(0xFF34D399)
-
-// New palette (soft lavender fintech look).
-val Ink = Color(0xFF17171C)
-val Canvas = Color(0xFFF1F1F4)
-val Lavender = Color(0xFFEDE7F6)
-val Violet = Color(0xFF7C5CBF)
-val VioletDeep = Color(0xFF4A3668)
-
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFD9CCF2),
-    onPrimary = Color(0xFF1E1530),
-    primaryContainer = Color(0xFF3A2D57),
-    onPrimaryContainer = Color(0xFFEDE7F6),
-    secondary = Emerald400,
-    onSecondary = Color(0xFF06241A),
-    secondaryContainer = Color(0xFF3A2D57),
-    onSecondaryContainer = Color(0xFFEDE7F6),
-    tertiary = Color(0xFFB79CF0),
-    background = Color(0xFF0F0D14),
-    onBackground = Color(0xFFF2F0F7),
-    surface = Color(0xFF1A1722),
-    onSurface = Color(0xFFF2F0F7),
-    surfaceVariant = Color(0xFF24202F),
-    onSurfaceVariant = Color(0xFFA39FB3),
-    outline = Color(0xFF332E40)
-)
+// Monochrome palette.
+val Ink = Color(0xFF111111)
+val Canvas = Color(0xFFF2F2F2)
+val Muted = Color(0xFF6E6E73)
+val Hairline = Color(0xFFE8E8EA)
+val Fill = Color(0xFFF2F2F3)
 
 private val LightColors = lightColorScheme(
     primary = Ink,
     onPrimary = Color.White,
-    primaryContainer = Lavender,
-    onPrimaryContainer = Color(0xFF2D1F4A),
-    secondary = Emerald600,
+    primaryContainer = Fill,
+    onPrimaryContainer = Ink,
+    secondary = Ink,
     onSecondary = Color.White,
-    secondaryContainer = Lavender,
-    onSecondaryContainer = Color(0xFF2D1F4A),
-    tertiary = Violet,
+    secondaryContainer = Fill,
+    onSecondaryContainer = Ink,
+    tertiary = Ink,
+    onTertiary = Color.White,
     background = Canvas,
     onBackground = Ink,
     surface = Color.White,
     onSurface = Ink,
-    surfaceVariant = Color(0xFFF4F2F8),
-    onSurfaceVariant = Color(0xFF6B6B78),
-    outline = Color(0xFFE4E4EA)
+    surfaceVariant = Fill,
+    onSurfaceVariant = Muted,
+    outline = Hairline,
+    outlineVariant = Hairline,
+    error = Ink,
+    onError = Color.White
 )
 
+private val DarkColors = darkColorScheme(
+    primary = Color.White,
+    onPrimary = Color.Black,
+    primaryContainer = Color(0xFF242424),
+    onPrimaryContainer = Color.White,
+    secondary = Color.White,
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFF242424),
+    onSecondaryContainer = Color.White,
+    tertiary = Color.White,
+    onTertiary = Color.Black,
+    background = Color.Black,
+    onBackground = Color(0xFFF5F5F5),
+    surface = Color(0xFF151515),
+    onSurface = Color(0xFFF5F5F5),
+    surfaceVariant = Color(0xFF242424),
+    onSurfaceVariant = Color(0xFF9A9A9F),
+    outline = Color(0xFF2A2A2A),
+    outlineVariant = Color(0xFF2A2A2A),
+    error = Color.White,
+    onError = Color.Black
+)
+
+private val Sans = FontFamily.SansSerif
+
 private val VaultTypography = Typography(
+    headlineLarge = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 40.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-1.2).sp
+    ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
+        fontFamily = Sans,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
         lineHeight = 30.sp,
-        letterSpacing = (-0.4).sp
+        letterSpacing = (-0.5).sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        letterSpacing = (-0.2).sp
     ),
     titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = Sans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
+        lineHeight = 22.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 22.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = Sans,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Medium,
+    bodySmall = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 18.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 18.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = Sans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.8.sp
     )
 )
 
 private val VaultShapes = Shapes(
-    extraSmall = RoundedCornerShape(16.dp),
-    small = RoundedCornerShape(18.dp),
-    medium = RoundedCornerShape(22.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(32.dp)
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 @Composable

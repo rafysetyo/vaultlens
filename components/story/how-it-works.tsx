@@ -20,7 +20,7 @@ const STEPS = [
   {
     n: '04',
     title: 'The cloud reasons on placeholders',
-    body: 'Gemini 2.5 Flash returns a summary, deadlines, amounts and red flags, referring to people only as [REDACTED_NAME].',
+    body: 'Gemini 3.8 Flash returns a summary, deadlines, amounts and red flags, referring to people only as [REDACTED_NAME].',
     where: 'app/api/analyze',
   },
 ]

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Observes real device network connectivity so offline-queued sanitized documents
- * automatically trigger Gemini 2.5 Flash analysis when connectivity returns.
+ * automatically trigger Gemini 3.8 Flash analysis when connectivity returns.
  */
 class NetworkMonitor(context: Context) {
     private val connectivityManager =

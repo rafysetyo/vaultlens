@@ -2,13 +2,13 @@ const ROUTES = [
   {
     device: 'Pixel with AICore',
     finds: 'Gemini Nano + rules',
-    reasons: 'Gemini 2.5 Flash on placeholders',
+    reasons: 'Gemini 3.8 Flash on placeholders',
     note: 'Best recall on names that carry no label.',
   },
   {
     device: 'Entry-level phone, no NPU',
     finds: 'Deterministic local filter',
-    reasons: 'Gemini 2.5 Flash on placeholders',
+    reasons: 'Gemini 3.8 Flash on placeholders',
     note: 'Same privacy line. No phone is left out.',
   },
   {

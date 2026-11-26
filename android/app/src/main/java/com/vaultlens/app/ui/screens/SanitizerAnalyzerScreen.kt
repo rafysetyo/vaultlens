@@ -2,7 +2,7 @@ package com.vaultlens.app.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -13,30 +13,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -62,12 +63,17 @@ import com.vaultlens.app.data.model.RedactionResult
 import com.vaultlens.app.data.model.VaultDocument
 import com.vaultlens.app.data.model.VaultFolder
 import com.vaultlens.app.data.ocr.LocalOcrProcessor
-import com.vaultlens.app.ui.components.HybridPrivacyBadge
-import com.vaultlens.app.ui.theme.Emerald600
+import com.vaultlens.app.ui.components.HairlineDivider
+import com.vaultlens.app.ui.components.HybridPipeline
+import com.vaultlens.app.ui.components.NanoState
+import com.vaultlens.app.ui.components.PipelineStage
+import com.vaultlens.app.ui.components.IconBubble
 import com.vaultlens.app.ui.components.PillChip
+import com.vaultlens.app.ui.components.PrimaryPillButton
+import com.vaultlens.app.ui.components.SectionCaption
+import com.vaultlens.app.ui.components.VaultCard
 import com.vaultlens.app.ui.components.VaultTopBar
 import com.vaultlens.app.ui.components.vaultFieldColors
-import androidx.compose.material3.ButtonDefaults
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
@@ -78,6 +84,7 @@ fun SanitizerAnalyzerScreen(
     router: HybridPrivacyRouter,
     activeRoute: InferenceRoute,
     isOnline: Boolean,
+    nanoState: NanoState = NanoState.CHECKING,
     folders: List<VaultFolder> = emptyList(),
     onBack: () -> Unit,
     onDocumentAnalyzed: (VaultDocument) -> Unit
@@ -181,215 +188,236 @@ fun SanitizerAnalyzerScreen(
         }
     }
 
+
+    val scheme = MaterialTheme.colorScheme
+    val fieldShape = RoundedCornerShape(20.dp)
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { VaultTopBar(title = "Scan & Sanitize", onBack = onBack) }
+        containerColor = scheme.background,
+        topBar = { VaultTopBar(title = "Scan & sanitize", onBack = onBack) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            HybridPrivacyBadge(
-                route = activeRoute,
-                piiSanitizedCount = redactionResult?.redactionLog?.size ?: 0,
+            HybridPipeline(
+                stage = when {
+                    cloudInsight != null -> PipelineStage.DONE
+                    redactionResult != null -> PipelineStage.ANALYZE
+                    rawText.isNotBlank() -> PipelineStage.REDACT
+                    else -> PipelineStage.CAPTURE
+                },
+                nanoState = nanoState,
                 isOnline = isOnline
             )
 
-            OutlinedTextField(
-                colors = vaultFieldColors(),
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Document Title") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                DocumentCategory.entries.forEach { item ->
-                    PillChip(
-                        selected = category == item,
-                        onClick = {
-                            category = item
-                            redactionResult?.let { currentResult ->
-                                val refreshed = LocalPiiSanitizer.suggestTagsLocally(
-                                    sanitizedText = currentResult.sanitizedText,
-                                    category = item,
-                                    redactionLog = currentResult.redactionLog
-                                )
-                                suggestedTags = (refreshed + suggestedTags).distinct().take(10)
-                            }
-                        },
-                        label = { Text(item.label) }
-                    )
-                }
+            FieldGroup(caption = "Title") {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    singleLine = true,
+                    shape = fieldShape,
+                    colors = vaultFieldColors(),
+                    placeholder = { Text("Document title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
-            if (folders.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    PillChip(
-                        selected = selectedFolderId.isEmpty(),
-                        onClick = { selectedFolderId = "" },
-                        label = { Text("Unfiled") }
-                    )
-                    folders.forEach { folder ->
+            FieldGroup(caption = "Category") {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(DocumentCategory.entries) { item ->
                         PillChip(
-                            selected = selectedFolderId == folder.id,
-                            onClick = { selectedFolderId = folder.id },
-                            label = { Text(folder.name) }
+                            selected = category == item,
+                            onClick = {
+                                category = item
+                                redactionResult?.let { currentResult ->
+                                    val refreshed = LocalPiiSanitizer.suggestTagsLocally(
+                                        sanitizedText = currentResult.sanitizedText,
+                                        category = item,
+                                        redactionLog = currentResult.redactionLog
+                                    )
+                                    suggestedTags = (refreshed + suggestedTags).distinct().take(10)
+                                }
+                            },
+                            label = { Text(item.label) }
                         )
                     }
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                    Text("Camera OCR")
-                }
-                OutlinedButton(
-                    onClick = { imagePicker.launch("image/*") },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                    Text("Gallery Image")
+            if (folders.isNotEmpty()) {
+                FieldGroup(caption = "Save to folder") {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item {
+                            PillChip(
+                                selected = selectedFolderId.isEmpty(),
+                                onClick = { selectedFolderId = "" },
+                                label = { Text("Unfiled") }
+                            )
+                        }
+                        items(folders, key = { it.id }) { folder ->
+                            PillChip(
+                                selected = selectedFolderId == folder.id,
+                                onClick = { selectedFolderId = folder.id },
+                                label = { Text(folder.name) }
+                            )
+                        }
+                    }
                 }
             }
 
-            OutlinedTextField(
-                colors = vaultFieldColors(),
-                value = rawText,
-                onValueChange = { rawText = it },
-                label = { Text("Raw Sensitive Document Text (Stays On-Device)") },
-                minLines = 5,
-                modifier = Modifier.fillMaxWidth()
-            )
+            FieldGroup(caption = "Import") {
+                VaultCard {
+                    SourceRow(
+                        icon = Icons.Default.PhotoCamera,
+                        title = "Camera OCR",
+                        subtitle = "Scan a page with your camera",
+                        enabled = !isBusy,
+                        onClick = { cameraLauncher.launch(null) }
+                    )
+                    HairlineDivider(modifier = Modifier.padding(horizontal = 18.dp))
+                    SourceRow(
+                        icon = Icons.Default.PhotoLibrary,
+                        title = "Gallery image",
+                        subtitle = "Read text from a saved photo",
+                        enabled = !isBusy,
+                        onClick = { imagePicker.launch("image/*") }
+                    )
+                }
+            }
 
-            Button(
+            FieldGroup(caption = "Document text") {
+                OutlinedTextField(
+                    value = rawText,
+                    onValueChange = { rawText = it },
+                    shape = fieldShape,
+                    colors = vaultFieldColors(),
+                    placeholder = { Text("Paste or type the text here. It never leaves this device.") },
+                    minLines = 6,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            PrimaryPillButton(
+                text = if (isBusy && redactionResult == null) "Working…" else "Redact PII locally",
                 onClick = { applyLocalRedaction(rawText) },
                 enabled = rawText.isNotBlank() && !isBusy,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            ) {
-                Text("Step 1: Redact PII Locally")
-            }
+                icon = Icons.Default.Lock
+            )
 
             redactionResult?.let { result ->
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                VaultCard {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = if (showOriginal) "Original (Local Only)" else "Sanitized Output",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Compare Original", style = MaterialTheme.typography.bodyMedium)
-                                Switch(checked = showOriginal, onCheckedChange = { showOriginal = it })
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (showOriginal) "Original" else "Sanitized output",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = scheme.onSurface
+                                )
+                                Text(
+                                    text = if (showOriginal) "Local only, never uploaded"
+                                    else "${result.redactionLog.size} items redacted",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = scheme.onSurfaceVariant
+                                )
                             }
+                            Switch(
+                                checked = showOriginal,
+                                onCheckedChange = { showOriginal = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = scheme.onPrimary,
+                                    checkedTrackColor = scheme.primary,
+                                    uncheckedThumbColor = scheme.onSurfaceVariant,
+                                    uncheckedTrackColor = scheme.surfaceVariant,
+                                    uncheckedBorderColor = scheme.outline
+                                )
+                            )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = if (showOriginal) {
                                 AnnotatedString(result.originalText)
                             } else {
                                 highlightRedactedTokens(result.sanitizedText)
                             },
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.onSurface
                         )
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                VaultCard {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Lock,
-                                    contentDescription = null,
-                                    tint = Emerald600
+                            IconBubble(icon = Icons.Default.Lock, size = 40.dp)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Outbound payload",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = scheme.onSurface
                                 )
                                 Text(
-                                    text = "Outbound Cloud Payload (Zero-Leak Proof)",
-                                    style = MaterialTheme.typography.titleSmall
+                                    text = "Zero-leak proof of what gets sent",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = scheme.onSurfaceVariant
                                 )
                             }
                             TextButton(onClick = { showPayloadProof = !showPayloadProof }) {
-                                Text(if (showPayloadProof) "Hide" else "Inspect")
+                                Text(if (showPayloadProof) "Hide" else "Inspect", color = scheme.onSurface)
                             }
                         }
                         if (showPayloadProof) {
                             val proofJson = JSONObject().apply {
-                                put("model", "gemini-2.5-flash")
+                                put("model", "gemini-3.8-flash")
                                 put("appCheckVerified", true)
                                 put("rawOriginalTextIncluded", false)
                                 put("piiScrubbedLocally", result.redactionLog.size)
                                 put("sanitizedText", result.sanitizedText)
                             }.toString(2)
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = proofJson,
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelMedium,
+                                color = scheme.onSurfaceVariant
                             )
                         }
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                VaultCard {
                     Column(
                         modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Auto-Suggested Content Tags (${selectedTags.size}/10)",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            TextButton(
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Tags",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = scheme.onSurface
+                                )
+                                Text(
+                                    text = "${selectedTags.size} of 10 selected",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = scheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(
                                 onClick = {
                                     val refreshed = LocalPiiSanitizer.suggestTagsLocally(
                                         sanitizedText = result.sanitizedText,
@@ -400,49 +428,56 @@ fun SanitizerAnalyzerScreen(
                                     selectedTags = refreshed.take(4)
                                 }
                             ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null)
-                                Spacer(modifier = Modifier.padding(horizontal = 2.dp))
-                                Text("Refresh")
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh tag suggestions")
                             }
                         }
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             suggestedTags.forEach { tag ->
                                 PillChip(
                                     selected = tag in selectedTags,
                                     onClick = { toggleTag(tag) },
-                                    label = { Text(tag) }
+                                    label = { Text(tag) },
+                                    onCard = true
                                 )
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                colors = vaultFieldColors(),
-                                value = customTagInput,
-                                onValueChange = { if (it.length <= 40) customTagInput = it },
-                                label = { Text("Add custom tag") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedButton(
-                                onClick = ::addCustomTag,
-                                enabled = customTagInput.isNotBlank() && selectedTags.size < 10
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add tag")
-                            }
-                        }
+                        OutlinedTextField(
+                            value = customTagInput,
+                            onValueChange = { if (it.length <= 40) customTagInput = it },
+                            placeholder = { Text("Add a custom tag") },
+                            singleLine = true,
+                            shape = CircleShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = scheme.surfaceVariant,
+                                unfocusedContainerColor = scheme.surfaceVariant,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = scheme.onSurface,
+                                cursorColor = scheme.onSurface
+                            ),
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = ::addCustomTag,
+                                    enabled = customTagInput.isNotBlank() && selectedTags.size < 10
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = "Add tag")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
 
-                Button(
+                PrimaryPillButton(
+                    text = when {
+                        isBusy -> "Working…"
+                        isOnline -> "Analyze with Gemini Flash"
+                        else -> "Queue offline"
+                    },
                     onClick = {
                         scope.launch {
                             isBusy = true
@@ -498,38 +533,76 @@ fun SanitizerAnalyzerScreen(
                             isBusy = false
                         }
                     },
-                    enabled = !isBusy,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                ) {
-                    Text(
-                        if (isOnline) "Step 2: Analyze Sanitized Text (Gemini Flash)"
-                        else "Queue Sanitized Text Offline"
-                    )
-                }
+                    enabled = !isBusy
+                )
             }
 
             cloudInsight?.let { insight ->
-                InsightSectionCard("Document Summary", listOf(insight.documentSummary))
-                InsightSectionCard("Key Dates & Deadlines", insight.keyDatesAndDeadlines)
-                InsightSectionCard("Financial Amounts", insight.financialAmounts)
-                InsightSectionCard("Potential Red Flags / Risks", insight.redFlagsAndRisks)
+                InsightSectionCard("Summary", listOf(insight.documentSummary))
+                InsightSectionCard("Key dates & deadlines", insight.keyDatesAndDeadlines)
+                InsightSectionCard("Financial amounts", insight.financialAmounts)
+                InsightSectionCard("Red flags & risks", insight.redFlagsAndRisks)
             }
         }
     }
 }
 
 @Composable
+private fun FieldGroup(caption: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionCaption(text = caption, modifier = Modifier.padding(start = 4.dp))
+        content()
+    }
+}
+
+@Composable
+private fun SourceRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        IconBubble(icon = icon, size = 40.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text(
+            text = "›",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 private fun highlightRedactedTokens(text: String): AnnotatedString {
+    val scheme = MaterialTheme.colorScheme
     val pattern = Regex("""\[REDACTED_[A-Z_]+]""")
     return buildAnnotatedString {
         append(text)
         pattern.findAll(text).forEach { match ->
             addStyle(
                 style = SpanStyle(
-                    color = Emerald600,
-                    background = Color(0x1A059669),
+                    color = scheme.surface,
+                    background = scheme.onSurface,
                     fontWeight = FontWeight.Bold
                 ),
                 start = match.range.first,
@@ -541,16 +614,27 @@ private fun highlightRedactedTokens(text: String): AnnotatedString {
 
 @Composable
 private fun InsightSectionCard(title: String, items: List<String>) {
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    val lines = items.filter { it.isNotBlank() }
+    VaultCard {
         Column(modifier = Modifier.padding(18.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(6.dp))
-            items.forEach { item ->
-                Text("• $item", style = MaterialTheme.typography.bodyMedium)
+            SectionCaption(text = title)
+            Spacer(modifier = Modifier.height(10.dp))
+            if (lines.isEmpty()) {
+                Text(
+                    "None detected.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            lines.forEachIndexed { index, item ->
+                if (index > 0) {
+                    HairlineDivider(modifier = Modifier.padding(vertical = 10.dp))
+                }
+                Text(
+                    item,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }

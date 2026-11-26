@@ -332,7 +332,7 @@ export function Scanner() {
                 ) : (
                   <CloudOff className="size-4" aria-hidden="true" />
                 )}
-                {phase === 'sending' ? 'Gemini 2.5 Flash is reading placeholders…' : isOnline ? 'Send placeholders to Gemini' : 'Save and queue for reconnect'}
+                {phase === 'sending' ? 'Gemini 3.8 Flash is reading placeholders…' : isOnline ? 'Send placeholders to Gemini' : 'Save and queue for reconnect'}
               </button>
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CheckCircle2 className="size-3.5 text-primary" aria-hidden="true" />

@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.google.firebase.Firebase
+import com.google.firebase.ai.ondevice.OnDeviceModelStatus
 import com.google.firebase.auth.auth
 import com.vaultlens.app.data.hybrid.HybridPrivacyRouter
 import com.vaultlens.app.data.model.AnalysisStatus
@@ -24,6 +25,7 @@ import com.vaultlens.app.data.model.VaultDocument
 import com.vaultlens.app.data.model.VaultFolder
 import com.vaultlens.app.data.network.NetworkMonitor
 import com.vaultlens.app.data.repository.VaultRepository
+import com.vaultlens.app.ui.components.NanoState
 import com.vaultlens.app.ui.screens.DocumentDetailScreen
 import com.vaultlens.app.ui.screens.SanitizerAnalyzerScreen
 import com.vaultlens.app.ui.screens.VaultDashboardScreen
@@ -47,6 +49,15 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val activeRoute by router.activeRoute.collectAsState()
                 val isOnline by networkMonitor.isOnline.collectAsState()
+                val onDeviceStatus by router.onDeviceStatus.collectAsState()
+                var nanoChecked by remember { mutableStateOf(false) }
+                val nanoState = when {
+                    !nanoChecked -> NanoState.CHECKING
+                    onDeviceStatus == OnDeviceModelStatus.AVAILABLE -> NanoState.READY
+                    onDeviceStatus == OnDeviceModelStatus.DOWNLOADING -> NanoState.DOWNLOADING
+                    onDeviceStatus == OnDeviceModelStatus.DOWNLOADABLE -> NanoState.DOWNLOADABLE
+                    else -> NanoState.UNAVAILABLE
+                }
                 var authReady by remember { mutableStateOf(Firebase.auth.currentUser != null) }
 
                 DisposableEffect(Unit) {
@@ -54,7 +65,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Make sure Gemini Nano is downloaded before the first scan.
-                LaunchedEffect(Unit) { router.prepareOnDeviceModel() }
+                LaunchedEffect(Unit) {
+                    router.prepareOnDeviceModel()
+                    nanoChecked = true
+                }
 
                 val folders = remember {
                     mutableStateListOf(
@@ -158,6 +172,7 @@ class MainActivity : ComponentActivity() {
                         folders = folders,
                         activeRoute = activeRoute,
                         isOnline = isOnline,
+                        nanoState = nanoState,
                         onOpenScanner = { currentScreen = "scanner" },
                         onSelectDocument = { doc ->
                             selectedDocument = doc
@@ -205,6 +220,7 @@ class MainActivity : ComponentActivity() {
                         router = router,
                         activeRoute = activeRoute,
                         isOnline = isOnline,
+                        nanoState = nanoState,
                         folders = folders,
                         onBack = { currentScreen = "dashboard" },
                         onDocumentAnalyzed = { newDoc ->
