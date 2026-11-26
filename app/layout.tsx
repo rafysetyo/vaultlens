@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 export const metadata: Metadata = {
   title: 'VaultLens — Gemini reads your paperwork. Your identity stays on the phone.',
   description:
-    'VaultLens scans contracts, medical bills and IDs, strips every personal identifier on device with Gemini Nano, and lets Gemini 2.5 Flash reason over placeholders only. Built for #BuildHybridAI.',
+    'VaultLens scans contracts, medical bills and IDs, strips every personal identifier on device with Gemini Nano, and lets Gemini 3.8 Flash reason over placeholders only. Built for #BuildHybridAI.',
   generator: 'v0.app',
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],

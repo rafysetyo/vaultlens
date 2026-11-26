@@ -18,7 +18,7 @@ export function Problem() {
         </p>
         <p className="text-muted-foreground">
           Phones can now run a capable model locally. Gemini Nano is good at spotting who a document is about, and bad at
-          long legal reasoning. Gemini 2.5 Flash is the opposite. VaultLens gives each model the half of the job it is good
+          long legal reasoning. Gemini 3.8 Flash is the opposite. VaultLens gives each model the half of the job it is good
           at, and draws the privacy line between them.
         </p>
       </div>

@@ -3,7 +3,7 @@ import { Download, FileCode2 } from 'lucide-react'
 const FILES = [
   {
     path: 'data/hybrid/HybridPrivacyRouter.kt',
-    role: 'Firebase AI Logic. InferenceMode.ONLY_ON_DEVICE asks Gemini Nano for names and never falls back to the cloud for raw text; gemini-2.5-flash only sees sanitized text.',
+    role: 'Firebase AI Logic. InferenceMode.ONLY_ON_DEVICE asks Gemini Nano for names and never falls back to the cloud for raw text; gemini-3.8-flash only sees sanitized text.',
   },
   {
     path: 'data/hybrid/LocalPiiSanitizer.kt',

@@ -1,3 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#17171C</color>
+    <!-- Launcher icon tile: the dark card tone, same as BrandTile in Theme.kt. -->
+    <color name="ic_launcher_background">#11131F</color>
+
+    <!--
+      Tokens from app/globals.css (OKLCH converted to sRGB). Compose reads Theme.kt;
+      these are for XML only (window background before Compose draws, splash, notifications).
+      Names follow the CSS variables. Light is the :root block, dark is the .dark block.
+    -->
+    <color name="vault_canvas_light">#EEEEEC</color>
+    <color name="vault_background_light">#FAFAF9</color>
+    <color name="vault_foreground_light">#111114</color>
+    <color name="vault_card_light">#FFFFFF</color>
+    <color name="vault_primary_light">#3C44DF</color>
+    <color name="vault_primary_foreground_light">#FCFCFC</color>
+    <color name="vault_accent_light">#ECEFFF</color>
+    <color name="vault_accent_foreground_light">#2F34B7</color>
+    <color name="vault_muted_foreground_light">#626367</color>
+    <color name="vault_destructive_light">#D02B31</color>
+    <color name="vault_border_light">#E4E3E1</color>
+
+    <color name="vault_canvas_dark">#03030A</color>
+    <color name="vault_background_dark">#090A14</color>
+    <color name="vault_foreground_dark">#EDEEF4</color>
+    <color name="vault_card_dark">#11131F</color>
+    <color name="vault_primary_dark">#1CC1AF</color>
+    <color name="vault_primary_foreground_dark">#000C0A</color>
+    <color name="vault_accent_dark">#013630</color>
+    <color name="vault_accent_foreground_dark">#90EBDD</color>
+    <color name="vault_muted_foreground_dark">#9C9DAB</color>
+    <color name="vault_destructive_dark">#FF6367</color>
+    <color name="vault_border_dark">#17FFFFFF</color>
 </resources>

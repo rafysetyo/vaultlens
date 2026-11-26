@@ -1,5 +1,6 @@
 <resources>
     <style name="Theme.VaultLens" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#F1F1F4</item>
+        <item name="android:windowBackground">@color/vault_background_light</item>
+        <item name="android:colorAccent">@color/vault_primary_light</item>
     </style>
 </resources>

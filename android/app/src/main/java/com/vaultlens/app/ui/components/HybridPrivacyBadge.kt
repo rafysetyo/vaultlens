@@ -1,29 +1,28 @@
 package com.vaultlens.app.ui.components
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vaultlens.app.data.model.InferenceRoute
-import com.vaultlens.app.ui.theme.Emerald600
-import com.vaultlens.app.ui.theme.Violet
 
 @Composable
 fun HybridPrivacyBadge(
@@ -32,52 +31,58 @@ fun HybridPrivacyBadge(
     isOnline: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val scheme = MaterialTheme.colorScheme
     val isLocal = route != InferenceRoute.CLOUD_FALLBACK_FLASH
-    val tint by animateColorAsState(
-        targetValue = if (isLocal) Emerald600 else Violet,
-        label = "privacyRouteTint"
-    )
+
+    val title = if (isLocal) "On-device privacy shield" else "Cloud fallback mode"
+    val subtitle = when {
+        route == InferenceRoute.ON_DEVICE_NANO -> "Gemini Nano · nothing leaves your phone"
+        isLocal -> "Rule-based redaction · Gemini Nano unavailable"
+        else -> "Gemini Flash · $piiSanitizedCount PII redacted first"
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = tint.copy(alpha = 0.12f)
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.surface
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surface) {
-                Icon(
-                    imageVector = if (isLocal) Icons.Default.Shield else Icons.Default.CloudQueue,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(18.dp)
+            IconBubble(
+                icon = if (isLocal) Icons.Default.Shield else Icons.Default.CloudQueue,
+                size = 40.dp
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = scheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 2
                 )
             }
-            Text(
-                text = if (route == InferenceRoute.ON_DEVICE_NANO) {
-                    "On-Device Privacy Shield (Gemini Nano)"
-                } else if (isLocal) {
-                    "On-Device Privacy Shield (rules only · Gemini Nano unavailable)"
-                } else {
-                    "Cloud Fallback Mode (Gemini Flash) · PII Redacted ($piiSanitizedCount)"
-                },
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 18.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            if (!isOnline) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(if (isOnline) scheme.primary else scheme.onSurfaceVariant)
+                )
                 Text(
-                    text = "Offline Queue",
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = tint
+                    text = if (isOnline) "Active" else "Offline",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    color = if (isOnline) scheme.onSurface else scheme.onSurfaceVariant
                 )
             }
         }

@@ -3,7 +3,7 @@ export function ProofStrip({ caught, total }: { caught: number; total: number })
     `${caught} of ${total} identifiers caught across 3 sample documents`,
     '0 raw values in the outbound payload',
     'Gemini Nano on device',
-    'Gemini 2.5 Flash on placeholders',
+    'Gemini 3.8 Flash on placeholders',
     'Server refuses payloads with a raw SSN, email or ID',
     'Firestore rules refuse raw-text fields',
     'Offline queue drains on reconnect',

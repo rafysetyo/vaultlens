@@ -15,7 +15,7 @@ export function Hero({ contract }: { contract: LocalRedactionResult }) {
         </h1>
         <p className="max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
           VaultLens scans contracts, medical bills and IDs on your phone, finds every personal identifier on device with Gemini
-          Nano, and lets Gemini 2.5 Flash reason over placeholders only.
+          Nano, and lets Gemini 3.8 Flash reason over placeholders only.
         </p>
         <p className="text-xs text-muted-foreground">
           Elena Rostova, Marcus Vance, Sarah Miller and Oakwood Medical are fictional. The redactions below are a live run of the
@@ -61,7 +61,7 @@ export function Hero({ contract }: { contract: LocalRedactionResult }) {
             </div>
             <div>
               <dt className="text-muted-foreground">cloud</dt>
-              <dd className="text-foreground">gemini-2.5-flash</dd>
+              <dd className="text-foreground">gemini-3.8-flash</dd>
             </div>
           </dl>
         </div>

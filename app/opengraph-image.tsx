@@ -25,7 +25,7 @@ export default function OpengraphImage() {
         </div>
         <div style={{ display: 'flex', gap: 16, fontSize: 24, color: '#17171c' }}>
           <span style={{ background: '#17171c', color: '#ffffff', padding: '8px 16px', borderRadius: 10 }}>Gemini Nano · on device</span>
-          <span style={{ background: '#e8e8fd', color: '#3730a3', padding: '8px 16px', borderRadius: 10 }}>Gemini 2.5 Flash · placeholders only</span>
+          <span style={{ background: '#e8e8fd', color: '#3730a3', padding: '8px 16px', borderRadius: 10 }}>Gemini 3.8 Flash · placeholders only</span>
           <span style={{ background: '#ffffff', padding: '8px 16px', borderRadius: 10 }}>#BuildHybridAI</span>
         </div>
       </div>

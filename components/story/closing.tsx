@@ -39,7 +39,7 @@ export function Closing() {
           <Logo />
           <p className="text-sm text-muted-foreground">A private document vault for people who want AI to read their paperwork without handing it over.</p>
         </div>
-        <p className="font-mono text-xs text-muted-foreground">Built for #BuildHybridAI · Gemini Nano + Gemini 2.5 Flash · Firebase</p>
+        <p className="font-mono text-xs text-muted-foreground">Built for #BuildHybridAI · Gemini Nano + Gemini 3.8 Flash · Firebase</p>
       </footer>
     </>
   )
