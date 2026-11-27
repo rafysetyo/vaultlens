@@ -90,7 +90,7 @@ import com.vaultlens.app.ui.components.vaultFieldColors
 import com.vaultlens.app.ui.theme.BrandCyan
 import com.vaultlens.app.ui.theme.BrandInk
 import com.vaultlens.app.ui.theme.BrandTeal
-import com.vaultlens.app.ui.theme.BrandTile
+import com.vaultlens.app.ui.theme.BrandNavy
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -674,7 +674,7 @@ private fun VaultHeroCard(documentCount: Int) {
             .fillMaxWidth()
             .height(196.dp)
             .clip(shape)
-            .background(BrandTile)
+            .background(BrandNavy)
             .drawBehind {
                 drawRect(
                     brush = Brush.radialGradient(
