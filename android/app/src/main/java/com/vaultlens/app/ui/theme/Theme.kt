@@ -14,13 +14,15 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaultlens.app.R
 
 /*
- * Design tokens, copied from app/globals.css (the OKLCH values converted to sRGB).
+ * Design tokens, based on app/globals.css, restyled for the Soft look (navy, pale blue, soft grey-blue).
  * Names follow the CSS variables so the two files are easy to diff.
  *
  * Fixed brand colours (logo, hero card) do not change with the theme.
@@ -32,48 +34,50 @@ val BrandTeal = Color(0xFF1CC1AF)
 val BrandCyan = Color(0xFF50D9EF)
 val BrandTile = Color(0xFF11131F)
 val BrandInk = Color(0xFFE2E4EF)
+/** Deep navy of the Soft style: hero card and dark highlight surfaces. */
+val BrandNavy = Color(0xFF0A3047)
 
 // :root (light)
-private val LightCanvas = Color(0xFFEEEEEC)
-private val LightBackground = Color(0xFFFAFAF9)
-private val LightForeground = Color(0xFF111114)
-private val LightInk = Color(0xFF111114)
+private val LightCanvas = Color(0xFFE3EAEF)
+private val LightBackground = Color(0xFFEDF1F4)
+private val LightForeground = Color(0xFF0A3047)
+private val LightInk = Color(0xFF0A3047)
 private val LightCard = Color(0xFFFFFFFF)
 private val LightPopover = Color(0xFFFFFFFF)
-private val LightPrimary = Color(0xFF3C44DF)
-private val LightPrimaryForeground = Color(0xFFFCFCFC)
-private val LightSecondary = Color(0xFFF4F3F2)
-private val LightSecondaryForeground = Color(0xFF1A1A1D)
-private val LightMuted = Color(0xFFF4F3F2)
-private val LightMutedForeground = Color(0xFF626367)
-private val LightAccent = Color(0xFFECEFFF)
-private val LightAccentForeground = Color(0xFF2F34B7)
-private val LightDestructive = Color(0xFFD02B31)
-private val LightBorder = Color(0xFFE4E3E1)
-private val LightInput = Color(0xFFE0DFDD)
-private val LightChart2 = Color(0xFF8A9FF0)
-private val LightErrorContainer = Color(0xFFF9E6E6) // destructive at 12% over card
+private val LightPrimary = Color(0xFF0A3047)
+private val LightPrimaryForeground = Color(0xFFFFFFFF)
+private val LightSecondary = Color(0xFFEEF1F3)
+private val LightSecondaryForeground = Color(0xFF0A3047)
+private val LightMuted = Color(0xFFEEF1F3)
+private val LightMutedForeground = Color(0xFF4F6B7B)
+private val LightAccent = Color(0xFFCDEBF6)
+private val LightAccentForeground = Color(0xFF0A3047)
+private val LightDestructive = Color(0xFFC62F2F)
+private val LightBorder = Color(0xFFE4EAEE)
+private val LightInput = Color(0xFFD5DEE4)
+private val LightChart2 = Color(0xFF6BA8C0)
+private val LightErrorContainer = Color(0xFFFBE9E7) // destructive at 12% over card
 
 // .dark
-private val DarkCanvas = Color(0xFF03030A)
-private val DarkBackground = Color(0xFF090A14)
-private val DarkForeground = Color(0xFFEDEEF4)
-private val DarkInk = Color(0xFFE2E4EF)
-private val DarkCard = Color(0xFF11131F)
-private val DarkPopover = Color(0xFF061D1A)
-private val DarkPrimary = Color(0xFF1CC1AF)
-private val DarkPrimaryForeground = Color(0xFF000C0A)
-private val DarkSecondary = Color(0xFF0F2623)
-private val DarkSecondaryForeground = Color(0xFFEDEEF4)
-private val DarkMuted = Color(0xFF1A1C2A)
-private val DarkMutedForeground = Color(0xFF9C9DAB)
-private val DarkAccent = Color(0xFF013630)
-private val DarkAccentForeground = Color(0xFF90EBDD)
-private val DarkDestructive = Color(0xFFFF6367)
-private val DarkBorder = Color(0x17FFFFFF) // white 9%
-private val DarkInput = Color(0x21FFFFFF) // white 13%
-private val DarkChart2 = Color(0xFF50D9EF)
-private val DarkErrorContainer = Color(0xFF41232D) // destructive at 20% over card
+private val DarkCanvas = Color(0xFF04131D)
+private val DarkBackground = Color(0xFF081C2A)
+private val DarkForeground = Color(0xFFE8F1F6)
+private val DarkInk = Color(0xFFCDEBF6)
+private val DarkCard = Color(0xFF0F2A3B)
+private val DarkPopover = Color(0xFF123247)
+private val DarkPrimary = Color(0xFFCDEBF6)
+private val DarkPrimaryForeground = Color(0xFF0A3047)
+private val DarkSecondary = Color(0xFF163A50)
+private val DarkSecondaryForeground = Color(0xFFE8F1F6)
+private val DarkMuted = Color(0xFF163A50)
+private val DarkMutedForeground = Color(0xFF9DB6C4)
+private val DarkAccent = Color(0xFF1B4A63)
+private val DarkAccentForeground = Color(0xFFCDEBF6)
+private val DarkDestructive = Color(0xFFFF8A80)
+private val DarkBorder = Color(0x1AFFFFFF) // white 9% // white 10%
+private val DarkInput = Color(0x26FFFFFF) // white 13% // white 15%
+private val DarkChart2 = Color(0xFF7CC3DC)
+private val DarkErrorContainer = Color(0xFF4A2A2E) // destructive at 20% over card
 
 // Legacy names, kept so any other file that still imports them keeps compiling.
 // They now point at the new palette (light-theme values for the neutral ones).
@@ -195,26 +199,31 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHighest = DarkMuted
 )
 
-private val Sans = FontFamily.SansSerif
+// Outfit (SIL Open Font License, see android/OUTFIT-OFL.txt). Only Regular and Bold are bundled:
+// Light and Medium resolve to Regular, SemiBold to Bold.
+private val Sans = FontFamily(
+    Font(R.font.outfit_regular, FontWeight.Normal),
+    Font(R.font.outfit_bold, FontWeight.Bold)
+)
 
 private val VaultTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = Sans,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 40.sp,
         lineHeight = 44.sp,
         letterSpacing = (-1.2).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = Sans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontWeight = FontWeight.Medium,
+        fontSize = 26.sp,
+        lineHeight = 31.sp,
         letterSpacing = (-0.5).sp
     ),
     titleLarge = TextStyle(
         fontFamily = Sans,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 18.sp,
         lineHeight = 24.sp,
         letterSpacing = (-0.2).sp
@@ -270,13 +279,13 @@ private val VaultTypography = Typography(
     )
 )
 
-// --radius is 0.75rem = 12dp. The CSS scale is md 0.8x, lg 1x, xl 1.4x, 2xl 1.8x, 3xl 2.2x.
+// Soft style: large rounded corners. Cards use large/extraLarge, chips and inputs medium.
 private val VaultShapes = Shapes(
-    extraSmall = RoundedCornerShape(9.6.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.8.dp),
-    large = RoundedCornerShape(21.6.dp),
-    extraLarge = RoundedCornerShape(26.4.dp)
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(32.dp)
 )
 
 @Composable

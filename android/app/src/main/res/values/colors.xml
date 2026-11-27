@@ -8,27 +8,27 @@
       these are for XML only (window background before Compose draws, splash, notifications).
       Names follow the CSS variables. Light is the :root block, dark is the .dark block.
     -->
-    <color name="vault_canvas_light">#EEEEEC</color>
-    <color name="vault_background_light">#FAFAF9</color>
-    <color name="vault_foreground_light">#111114</color>
+    <color name="vault_canvas_light">#E3EAEF</color>
+    <color name="vault_background_light">#EDF1F4</color>
+    <color name="vault_foreground_light">#0A3047</color>
     <color name="vault_card_light">#FFFFFF</color>
-    <color name="vault_primary_light">#3C44DF</color>
-    <color name="vault_primary_foreground_light">#FCFCFC</color>
-    <color name="vault_accent_light">#ECEFFF</color>
-    <color name="vault_accent_foreground_light">#2F34B7</color>
-    <color name="vault_muted_foreground_light">#626367</color>
-    <color name="vault_destructive_light">#D02B31</color>
-    <color name="vault_border_light">#E4E3E1</color>
+    <color name="vault_primary_light">#0A3047</color>
+    <color name="vault_primary_foreground_light">#FFFFFF</color>
+    <color name="vault_accent_light">#CDEBF6</color>
+    <color name="vault_accent_foreground_light">#0A3047</color>
+    <color name="vault_muted_foreground_light">#4F6B7B</color>
+    <color name="vault_destructive_light">#C62F2F</color>
+    <color name="vault_border_light">#E4EAEE</color>
 
-    <color name="vault_canvas_dark">#03030A</color>
-    <color name="vault_background_dark">#090A14</color>
-    <color name="vault_foreground_dark">#EDEEF4</color>
-    <color name="vault_card_dark">#11131F</color>
-    <color name="vault_primary_dark">#1CC1AF</color>
-    <color name="vault_primary_foreground_dark">#000C0A</color>
-    <color name="vault_accent_dark">#013630</color>
-    <color name="vault_accent_foreground_dark">#90EBDD</color>
-    <color name="vault_muted_foreground_dark">#9C9DAB</color>
-    <color name="vault_destructive_dark">#FF6367</color>
-    <color name="vault_border_dark">#17FFFFFF</color>
+    <color name="vault_canvas_dark">#04131D</color>
+    <color name="vault_background_dark">#081C2A</color>
+    <color name="vault_foreground_dark">#E8F1F6</color>
+    <color name="vault_card_dark">#0F2A3B</color>
+    <color name="vault_primary_dark">#CDEBF6</color>
+    <color name="vault_primary_foreground_dark">#0A3047</color>
+    <color name="vault_accent_dark">#1B4A63</color>
+    <color name="vault_accent_foreground_dark">#CDEBF6</color>
+    <color name="vault_muted_foreground_dark">#9DB6C4</color>
+    <color name="vault_destructive_dark">#FF8A80</color>
+    <color name="vault_border_dark">#1AFFFFFF</color>
 </resources>
