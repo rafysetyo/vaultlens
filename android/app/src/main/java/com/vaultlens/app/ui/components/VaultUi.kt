@@ -1,5 +1,12 @@
 package com.vaultlens.app.ui.components
 
+import com.vaultlens.app.ui.theme.vaultHeaderBrush
+import com.vaultlens.app.ui.theme.vaultExtras
+import com.vaultlens.app.ui.theme.softShadow
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -89,7 +96,9 @@ fun VaultCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .softShadow(MaterialTheme.shapes.large),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -212,15 +221,17 @@ fun CircleIconButton(
     icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    elevated: Boolean = true
 ) {
+    val base = modifier.size(44.dp)
     Surface(
         onClick = onClick,
-        modifier = modifier.size(44.dp),
+        modifier = if (elevated) base.softShadow(CircleShape, elevation = 4.dp) else base,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = containerColor,
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(20.dp))
@@ -245,11 +256,12 @@ fun CircleAction(
         Surface(
             onClick = onClick,
             enabled = enabled,
-            modifier = Modifier.size(60.dp),
+            modifier = Modifier
+                .size(60.dp)
+                .softShadow(CircleShape, elevation = 4.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            contentColor = MaterialTheme.colorScheme.onSurface
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
@@ -425,4 +437,25 @@ fun FindingLine(
             modifier = Modifier.weight(1f)
         )
     }
+}
+
+/**
+ * v2 header: pale-blue gradient with the sheet colour rising over its bottom edge in a rounded lip.
+ * Leave at least [lipHeight] of bottom padding inside the header so content never sits on the lip.
+ */
+@Composable
+fun Modifier.vaultHeader(lipHeight: Dp = 28.dp, lipRadius: Dp = 32.dp): Modifier {
+    val sheet = MaterialTheme.vaultExtras.sheet
+    return this
+        .background(vaultHeaderBrush())
+        .drawBehind {
+            val lip = lipHeight.toPx()
+            val radius = lipRadius.toPx()
+            drawRoundRect(
+                color = sheet,
+                topLeft = Offset(0f, size.height - lip),
+                size = Size(size.width, lip + radius),
+                cornerRadius = CornerRadius(radius, radius)
+            )
+        }
 }

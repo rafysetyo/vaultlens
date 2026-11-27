@@ -12,11 +12,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vaultlens.app.R
@@ -57,6 +62,11 @@ private val LightBorder = Color(0xFFE4EAEE)
 private val LightInput = Color(0xFFD5DEE4)
 private val LightChart2 = Color(0xFF6BA8C0)
 private val LightErrorContainer = Color(0xFFFBE9E7) // destructive at 12% over card
+// v2 Soft: bottom sheet surface, header gradient and the soft card shadow (navy at ~8%).
+private val LightSheet = Color(0xFFF8F9FA)
+private val LightHeaderTop = Color(0xFFAAC6D9)
+private val LightHeaderBottom = Color(0xFFE0E8EF)
+private val LightCardShadow = Color(0x140A3047)
 
 // .dark
 private val DarkCanvas = Color(0xFF04131D)
@@ -78,6 +88,11 @@ private val DarkBorder = Color(0x1AFFFFFF) // white 9% // white 10%
 private val DarkInput = Color(0x26FFFFFF) // white 13% // white 15%
 private val DarkChart2 = Color(0xFF7CC3DC)
 private val DarkErrorContainer = Color(0xFF4A2A2E) // destructive at 20% over card
+// v2 Soft, dark counterparts.
+private val DarkSheet = Color(0xFF0B2231)
+private val DarkHeaderTop = Color(0xFF14394F)
+private val DarkHeaderBottom = Color(0xFF0B2231)
+private val DarkCardShadow = Color(0x66000000)
 
 // Legacy names, kept so any other file that still imports them keeps compiling.
 // They now point at the new palette (light-theme values for the neutral ones).
@@ -108,11 +123,26 @@ class VaultExtras(
     /** Text colour drawn on top of [ink]. */
     val onInk: Color,
     /** --canvas: the tone behind the app frame. */
-    val canvas: Color
+    val canvas: Color,
+    /** Bottom sheet surface that rises over the header (Home list, document summary). */
+    val sheet: Color,
+    /** Header gradient, top and bottom. The bottom stop meets [sheet] without a visible seam. */
+    val headerTop: Color,
+    val headerBottom: Color,
+    /** Colour of the soft card shadow. */
+    val cardShadow: Color
 )
 
-private val LightExtras = VaultExtras(ink = LightInk, onInk = LightCard, canvas = LightCanvas)
-private val DarkExtras = VaultExtras(ink = DarkInk, onInk = DarkBackground, canvas = DarkCanvas)
+private val LightExtras = VaultExtras(
+    ink = LightInk, onInk = LightCard, canvas = LightCanvas,
+    sheet = LightSheet, headerTop = LightHeaderTop, headerBottom = LightHeaderBottom,
+    cardShadow = LightCardShadow
+)
+private val DarkExtras = VaultExtras(
+    ink = DarkInk, onInk = DarkBackground, canvas = DarkCanvas,
+    sheet = DarkSheet, headerTop = DarkHeaderTop, headerBottom = DarkHeaderBottom,
+    cardShadow = DarkCardShadow
+)
 
 val LocalVaultExtras = staticCompositionLocalOf { LightExtras }
 
@@ -120,6 +150,30 @@ val MaterialTheme.vaultExtras: VaultExtras
     @Composable
     @ReadOnlyComposable
     get() = LocalVaultExtras.current
+
+/** v2 header gradient: pale blue at the top fading into the sheet tone. */
+@Composable
+@ReadOnlyComposable
+fun vaultHeaderBrush(): Brush {
+    val extras = LocalVaultExtras.current
+    return Brush.verticalGradient(listOf(extras.headerTop, extras.headerBottom))
+}
+
+/**
+ * v2 soft card shadow: low elevation, tinted with the navy ink instead of pure black,
+ * so white cards lift off the sheet without looking heavy. Apply before `.background(...)`.
+ */
+@Composable
+fun Modifier.softShadow(shape: Shape, elevation: Dp = 6.dp): Modifier {
+    val tint = LocalVaultExtras.current.cardShadow
+    return this.shadow(
+        elevation = elevation,
+        shape = shape,
+        clip = false,
+        ambientColor = tint,
+        spotColor = tint
+    )
+}
 
 private val LightColors = lightColorScheme(
     primary = LightPrimary,

@@ -1,9 +1,21 @@
 package com.vaultlens.app.ui.screens
 
+import com.vaultlens.app.ui.components.CircleIconButton
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.graphics.Brush
+import com.vaultlens.app.ui.theme.softShadow
+import com.vaultlens.app.ui.components.MonoTag
+import com.vaultlens.app.ui.theme.vaultHeaderBrush
+import androidx.compose.foundation.background
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -55,6 +67,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vaultlens.app.data.hybrid.HybridPrivacyRouter
 import com.vaultlens.app.data.hybrid.LocalPiiSanitizer
 import com.vaultlens.app.data.model.AnalysisStatus
@@ -109,6 +122,7 @@ fun SanitizerAnalyzerScreen(
     var cloudInsight by remember { mutableStateOf<CloudInsight?>(null) }
     var showPayloadProof by remember { mutableStateOf(false) }
     var isBusy by remember { mutableStateOf(false) }
+    var sourceTab by remember { mutableStateOf(0) } // 0 camera, 1 paste, 2 file
 
     fun applyLocalRedaction(text: String, currentCategory: DocumentCategory = category) {
         scope.launch {
@@ -196,9 +210,50 @@ fun SanitizerAnalyzerScreen(
     val scheme = MaterialTheme.colorScheme
     val fieldShape = RoundedCornerShape(20.dp)
 
+    val extras = MaterialTheme.vaultExtras
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    0f to extras.headerTop,
+                    0.55f to extras.sheet,
+                    1f to extras.sheet
+                )
+            )
+    ) {
     Scaffold(
-        containerColor = scheme.background,
-        topBar = { VaultTopBar(title = "Scan & sanitize", onBack = onBack) }
+        containerColor = Color.Transparent,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CircleIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    onClick = onBack
+                )
+                Text(
+                    text = "Scan or paste",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp, lineHeight = 28.sp),
+                    color = scheme.onBackground,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(shape = CircleShape, color = scheme.primaryContainer) {
+                    Text(
+                        text = if (isOnline) "Hybrid" else "On-device",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = scheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -208,16 +263,147 @@ fun SanitizerAnalyzerScreen(
                 .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            HybridPipeline(
-                stage = when {
-                    cloudInsight != null -> PipelineStage.DONE
-                    redactionResult != null -> PipelineStage.ANALYZE
-                    rawText.isNotBlank() -> PipelineStage.REDACT
-                    else -> PipelineStage.CAPTURE
-                },
-                nanoState = nanoState,
-                isOnline = isOnline
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SourceTab(
+                    label = "Camera",
+                    selected = sourceTab == 0,
+                    enabled = !isBusy,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        sourceTab = 0
+                        cameraLauncher.launch(null)
+                    }
+                )
+                SourceTab(
+                    label = "Paste",
+                    selected = sourceTab == 1,
+                    enabled = !isBusy,
+                    modifier = Modifier.weight(1f),
+                    onClick = { sourceTab = 1 }
+                )
+                SourceTab(
+                    label = "File",
+                    selected = sourceTab == 2,
+                    enabled = !isBusy,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        sourceTab = 2
+                        imagePicker.launch("image/*")
+                    }
+                )
+            }
+
+            VaultCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(22.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = redactionResult?.let { "Found on your phone · ${it.redactionLog.size} items" }
+                            ?: "Paste or scan to begin",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSurfaceVariant
+                    )
+                    if (redactionResult == null) {
+                        OutlinedTextField(
+                            value = rawText,
+                            onValueChange = { rawText = it },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = scheme.primary
+                            ),
+                            placeholder = { Text("Paste or type the text here. It never leaves this device.") },
+                            minLines = 6,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        val result = redactionResult!!
+                        Text(
+                            text = if (showOriginal) AnnotatedString(result.originalText)
+                            else blockRedactions(result.sanitizedText, scheme.primary),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = scheme.onSurface
+                        )
+                        val counts = result.redactionLog.groupingBy { it.entityType.toString() }.eachCount()
+                        if (counts.isNotEmpty()) {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                counts.forEach { (type, count) ->
+                                    val name = type.lowercase().replace('_', ' ')
+                                    val label = if (name.length <= 3) name.uppercase() else if (count > 1) name + "s" else name
+                                    Surface(shape = CircleShape, color = scheme.primaryContainer) {
+                                        Text(
+                                            text = "$count $label",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = scheme.onPrimaryContainer,
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        TextButton(onClick = { redactionResult = null }) {
+                            Text("Edit text", color = scheme.onSurface)
+                        }
+                    }
+                }
+            }
+
+            VaultCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    listOf(
+                        "Read" to "ML Kit OCR",
+                        "Find" to "On-device",
+                        "Redact" to "Local rules",
+                        "Reason" to "Cloud"
+                    ).forEachIndexed { index, (step, sub) ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = step,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (index == 3) scheme.onSurface else Color(0xFF2C6E8E)
+                            )
+                            Text(
+                                text = sub,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = scheme.primaryContainer,
+                contentColor = scheme.onPrimaryContainer
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(22.dp))
+                    Column {
+                        Text("Cloud sees placeholders only", style = MaterialTheme.typography.titleMedium)
+                        Text("Names become [REDACTED_NAME]", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
 
             FieldGroup(caption = "Title") {
                 OutlinedTextField(
@@ -274,43 +460,18 @@ fun SanitizerAnalyzerScreen(
                 }
             }
 
-            FieldGroup(caption = "Import") {
-                VaultCard {
-                    SourceRow(
-                        icon = Icons.Default.PhotoCamera,
-                        title = "Camera OCR",
-                        subtitle = "Scan a page with your camera",
-                        enabled = !isBusy,
-                        onClick = { cameraLauncher.launch(null) }
-                    )
-                    HairlineDivider(modifier = Modifier.padding(horizontal = 18.dp))
-                    SourceRow(
-                        icon = Icons.Default.PhotoLibrary,
-                        title = "Gallery image",
-                        subtitle = "Read text from a saved photo",
-                        enabled = !isBusy,
-                        onClick = { imagePicker.launch("image/*") }
-                    )
-                }
-            }
-
-            FieldGroup(caption = "Document text") {
-                OutlinedTextField(
-                    value = rawText,
-                    onValueChange = { rawText = it },
-                    shape = fieldShape,
-                    colors = vaultFieldColors(),
-                    placeholder = { Text("Paste or type the text here. It never leaves this device.") },
-                    minLines = 6,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
             PrimaryPillButton(
                 text = if (isBusy && redactionResult == null) "Working…" else "Redact PII locally",
                 onClick = { applyLocalRedaction(rawText) },
                 enabled = rawText.isNotBlank() && !isBusy,
                 icon = Icons.Default.Lock
+            )
+            Text(
+                text = "Offline? Rule-based redaction still works",
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
             redactionResult?.let { result ->
@@ -563,6 +724,7 @@ fun SanitizerAnalyzerScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -665,4 +827,44 @@ private fun InsightSectionCard(title: String, items: List<String>, danger: Boole
             }
         }
     }
+}
+
+/** Source tab (Camera / Paste / File): pale blue when active, white otherwise. */
+@Composable
+private fun SourceTab(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .height(52.dp)
+            .softShadow(CircleShape, elevation = 3.dp),
+        shape = CircleShape,
+        color = if (selected) scheme.primaryContainer else scheme.surface,
+        contentColor = if (selected) scheme.onPrimaryContainer else scheme.onSurface
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(text = label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+        }
+    }
+}
+
+/** Shows each [REDACTED_*] placeholder as a solid navy block, like the mockup. */
+private fun blockRedactions(text: String, ink: Color): AnnotatedString = buildAnnotatedString {
+    val token = Regex("\\[[A-Z0-9_]+\\]")
+    var last = 0
+    token.findAll(text).forEach { m ->
+        append(text.substring(last, m.range.first))
+        pushStyle(SpanStyle(background = ink, color = ink))
+        append("█".repeat(m.value.length.coerceIn(6, 14)))
+        pop()
+        last = m.range.last + 1
+    }
+    append(text.substring(last))
 }

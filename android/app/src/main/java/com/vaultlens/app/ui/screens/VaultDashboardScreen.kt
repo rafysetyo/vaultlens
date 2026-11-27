@@ -1,5 +1,18 @@
 package com.vaultlens.app.ui.screens
 
+import androidx.compose.material.icons.filled.Notifications
+import com.vaultlens.app.ui.theme.softShadow
+import com.vaultlens.app.ui.components.MonoTag
+import com.vaultlens.app.ui.components.CircleIconButton
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.NorthEast
+import com.vaultlens.app.ui.theme.vaultExtras
+import com.vaultlens.app.ui.theme.BrandNavy
+import com.vaultlens.app.ui.components.vaultHeader
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -23,6 +36,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -90,7 +104,7 @@ import com.vaultlens.app.ui.components.vaultFieldColors
 import com.vaultlens.app.ui.theme.BrandCyan
 import com.vaultlens.app.ui.theme.BrandInk
 import com.vaultlens.app.ui.theme.BrandTeal
-import com.vaultlens.app.ui.theme.BrandNavy
+import com.vaultlens.app.ui.theme.BrandTile
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -134,6 +148,8 @@ fun VaultDashboardScreen(
     var isCreatingFolder by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var searchOpen by remember { mutableStateOf(false) }
+    var tileFilter by remember { mutableStateOf<String?>(null) }
 
     val folderById = remember(folders) { folders.associateBy { it.id } }
 
@@ -183,10 +199,16 @@ fun VaultDashboardScreen(
         }
     }
 
-    val filteredDocs = remember(documents, folderById, selectedCategory, selectedFolderFilter, searchQuery, sortOption) {
+    val filteredDocs = remember(documents, folderById, tileFilter, selectedFolderFilter, searchQuery, sortOption) {
         val tokens = searchQuery.trim().lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
         val filtered = documents.filter { doc ->
-            val matchesCategory = selectedCategory == null || doc.category == selectedCategory
+            val matchesCategory = when (tileFilter) {
+                "contracts" -> doc.category == DocumentCategory.CONTRACT || doc.category == DocumentCategory.LEGAL
+                "invoices" -> doc.category == DocumentCategory.INVOICE
+                "ids" -> doc.category == DocumentCategory.ID_PASSPORT
+                "unfiled" -> doc.folderId !in folderById
+                else -> true
+            }
             if (!matchesCategory) return@filter false
 
             val docFolder = folderById[doc.folderId]
@@ -236,8 +258,13 @@ fun VaultDashboardScreen(
     val analyzedCount = documents.count { it.analysisStatus == AnalysisStatus.ANALYZED }
     val queuedCount = documents.count { it.analysisStatus == AnalysisStatus.QUEUED_OFFLINE }
     val scheme = MaterialTheme.colorScheme
+    val sheetColor = MaterialTheme.vaultExtras.sheet
+    val recentDocs = remember(documents) { documents.sortedByDescending { it.createdAtMillis }.take(6) }
 
-    Scaffold(containerColor = scheme.background) { padding ->
+    Scaffold(
+        containerColor = sheetColor,
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -246,57 +273,153 @@ fun VaultDashboardScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 // Large bottom padding so the floating button never covers the last card.
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 128.dp),
+                contentPadding = PaddingValues(bottom = 128.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .vaultHeader()
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .padding(top = 12.dp, bottom = 44.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        VaultMark(size = 44.dp)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Your private vault",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = scheme.onSurfaceVariant
-                            )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            VaultMark(size = 44.dp)
                             Text(
                                 text = "VaultLens",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = scheme.onBackground
+                                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 28.sp, lineHeight = 32.sp),
+                                color = scheme.onBackground,
+                                modifier = Modifier.weight(1f)
                             )
+                            Box {
+                                CircleIconButton(
+                                    icon = Icons.Default.Notifications,
+                                    contentDescription = "Notifications",
+                                    onClick = {},
+                                    elevated = false
+                                )
+                                if (queuedCount > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(top = 8.dp, end = 8.dp)
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(scheme.error)
+                                    )
+                                }
+                            }
                         }
-                        ConnectionPill(isOnline = isOnline)
+                        MonoTag(
+                            text = "${documents.size} protected · ${if (isOnline) "Hybrid" else "On-device"} redaction",
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (recentDocs.isEmpty()) {
+                                item {
+                                    RecentDocCard(
+                                        title = "No documents yet",
+                                        subtitle = "Scan or paste your first one",
+                                        highlighted = true,
+                                        onClick = onOpenScanner
+                                    )
+                                }
+                            } else {
+                                itemsIndexed(recentDocs, key = { _, doc -> doc.id }) { index, doc ->
+                                    RecentDocCard(
+                                        title = doc.title,
+                                        subtitle = "${doc.category.label} · ${doc.piiRedactedCount} PII hidden",
+                                        highlighted = index == 0,
+                                        onClick = { onSelectDocument(doc) }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
-                item { VaultHeroCard(documentCount = documents.size) }
-
                 item {
-                    OverviewCard(
-                        piiRedacted = totalPiiRedacted,
-                        flagged = flaggedCount,
-                        analyzed = analyzedCount,
-                        queued = queuedCount,
-                        total = documents.size
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(4.dp)
+                                .clip(CircleShape)
+                                .background(scheme.primary)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "Let's find\nyour document",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = scheme.onBackground,
+                                modifier = Modifier.weight(1f)
+                            )
+                            CircleIconButton(
+                                icon = Icons.Default.Search,
+                                contentDescription = "Search",
+                                onClick = { searchOpen = !searchOpen },
+                                containerColor = scheme.surfaceVariant,
+                                elevated = false
+                            )
+                            Box {
+                                CircleIconButton(
+                                    icon = Icons.Default.FilterList,
+                                    contentDescription = "Sort options",
+                                    onClick = { sortMenuExpanded = true },
+                                    containerColor = scheme.surfaceVariant,
+                                    elevated = false
+                                )
+                                DropdownMenu(
+                                    expanded = sortMenuExpanded,
+                                    onDismissRequest = { sortMenuExpanded = false }
+                                ) {
+                                    VaultSortOption.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option.label) },
+                                            trailingIcon = if (option == sortOption) {
+                                                { Icon(Icons.Default.Check, contentDescription = null) }
+                                            } else null,
+                                            onClick = {
+                                                sortOption = option
+                                                sortMenuExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
-                item {
-                    HybridEngineCard(
-                        nanoState = nanoState,
-                        isOnline = isOnline,
-                        activeRoute = activeRoute
-                    )
-                }
-
+                if (searchOpen || searchQuery.isNotEmpty()) {
                 item {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
                         singleLine = true,
                         shape = CircleShape,
                         colors = vaultFieldColors(),
@@ -319,9 +442,43 @@ fun VaultDashboardScreen(
                         }
                     )
                 }
+                }
 
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val tiles = listOf(
+                        Triple("contracts", "Contracts", documents.count { it.category == DocumentCategory.CONTRACT || it.category == DocumentCategory.LEGAL }),
+                        Triple("invoices", "Invoices", documents.count { it.category == DocumentCategory.INVOICE }),
+                        Triple("ids", "IDs and forms", documents.count { it.category == DocumentCategory.ID_PASSPORT }),
+                        Triple("unfiled", "Unfiled", documents.count { it.folderId !in folderById })
+                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        tiles.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                rowItems.forEach { (key, label, count) ->
+                                    CategoryTile(
+                                        label = label,
+                                        count = count,
+                                        selected = tileFilter == key,
+                                        onClick = { tileFilter = if (tileFilter == key) null else key },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         SectionHeader(title = "Folders") {
                             NewFolderCircleButton(onClick = { isCreatingFolder = !isCreatingFolder })
                         }
@@ -414,75 +571,22 @@ fun VaultDashboardScreen(
                 }
 
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionHeader(title = "Documents") {
-                            Box {
-                                Surface(
-                                    onClick = { sortMenuExpanded = true },
-                                    shape = CircleShape,
-                                    color = scheme.surface,
-                                    contentColor = scheme.onSurface
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .height(36.dp)
-                                            .padding(start = 14.dp, end = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = sortOption.label,
-                                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp)
-                                        )
-                                        Icon(
-                                            Icons.Default.ArrowDropDown,
-                                            contentDescription = "Sort options",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-                                DropdownMenu(
-                                    expanded = sortMenuExpanded,
-                                    onDismissRequest = { sortMenuExpanded = false }
-                                ) {
-                                    VaultSortOption.entries.forEach { option ->
-                                        DropdownMenuItem(
-                                            text = { Text(option.label) },
-                                            trailingIcon = if (option == sortOption) {
-                                                { Icon(Icons.Default.Check, contentDescription = null) }
-                                            } else null,
-                                            onClick = {
-                                                sortOption = option
-                                                sortMenuExpanded = false
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            item {
-                                PillChip(
-                                    selected = selectedCategory == null,
-                                    onClick = { selectedCategory = null },
-                                    label = { Text("All") }
-                                )
-                            }
-                            items(DocumentCategory.entries) { category ->
-                                PillChip(
-                                    selected = selectedCategory == category,
-                                    onClick = { selectedCategory = category },
-                                    label = { Text(category.label) }
-                                )
-                            }
+                    SectionHeader(
+                        title = "Documents",
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    ) {
+                        if (tileFilter != null) {
+                            PillChip(
+                                selected = true,
+                                onClick = { tileFilter = null },
+                                label = { Text("Clear filter  ✕") }
+                            )
                         }
                     }
                 }
 
                 item {
-                    VaultCard {
+                    VaultCard(modifier = Modifier.padding(horizontal = 20.dp)) {
                         if (filteredDocs.isEmpty()) {
                             Column(modifier = Modifier.padding(22.dp)) {
                                 Text(
@@ -520,6 +624,27 @@ fun VaultDashboardScreen(
                         }
                     }
                 }
+
+                item {
+                    OverviewCard(
+                        piiRedacted = totalPiiRedacted,
+                        flagged = flaggedCount,
+                        analyzed = analyzedCount,
+                        queued = queuedCount,
+                        total = documents.size,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                }
+
+                item {
+                    HybridEngineCard(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        nanoState = nanoState,
+                        isOnline = isOnline,
+                        activeRoute = activeRoute
+                    )
+                }
+
             }
 
             // Soft fade so cards slide out from under the floating action area.
@@ -529,7 +654,7 @@ fun VaultDashboardScreen(
                     .fillMaxWidth()
                     .height(110.dp)
                     .background(
-                        Brush.verticalGradient(listOf(Color.Transparent, scheme.background))
+                        Brush.verticalGradient(listOf(Color.Transparent, sheetColor))
                     )
             )
 
@@ -537,6 +662,7 @@ fun VaultDashboardScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
             ) {
                 if (selectedDocuments.isNotEmpty()) {
@@ -678,7 +804,7 @@ private fun VaultHeroCard(documentCount: Int) {
             .drawBehind {
                 drawRect(
                     brush = Brush.radialGradient(
-                        colors = listOf(BrandTeal.copy(alpha = 0.34f), Color.Transparent),
+                        colors = listOf(BrandCyan.copy(alpha = 0.28f), Color.Transparent),
                         center = Offset(size.width * 0.10f, 0f),
                         radius = size.width * 0.80f
                     )
@@ -690,7 +816,7 @@ private fun VaultHeroCard(documentCount: Int) {
                         radius = size.width * 0.60f
                     )
                 )
-                val ring = BrandTeal.copy(alpha = 0.16f)
+                val ring = BrandCyan.copy(alpha = 0.16f)
                 listOf(0.52f, 0.62f, 0.72f).forEachIndexed { i, r ->
                     drawCircle(
                         color = ring,
@@ -715,7 +841,7 @@ private fun VaultHeroCard(documentCount: Int) {
                 Icon(
                     Icons.Default.Lock,
                     contentDescription = null,
-                    tint = BrandTeal,
+                    tint = BrandCyan,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
@@ -783,11 +909,12 @@ private fun OverviewCard(
     flagged: Int,
     analyzed: Int,
     queued: Int,
-    total: Int
+    total: Int,
+    modifier: Modifier = Modifier
 ) {
     val scheme = MaterialTheme.colorScheme
     val progress = if (total == 0) 0f else analyzed.toFloat() / total
-    VaultCard {
+    VaultCard(modifier = modifier) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "Protection overview",
@@ -969,6 +1096,184 @@ private fun DocumentRow(
                     else -> scheme.onSurface
                 }
             )
+        }
+    }
+}
+
+/** Recent document card in the header carousel. The first card is darker and carries the white pill. */
+@Composable
+private fun RecentDocCard(
+    title: String,
+    subtitle: String,
+    highlighted: Boolean,
+    onClick: () -> Unit
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .width(240.dp)
+            .height(176.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = if (highlighted) Color(0xFF9DBBD0) else scheme.surface.copy(alpha = 0.65f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            if (highlighted) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = Color(0xFFE3EAEF)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        PreviewBar(width = 96.dp, color = Color(0xFFB6C5D0))
+                        PreviewBar(width = 96.dp, color = scheme.primary)
+                        PreviewBar(width = 52.dp, color = Color(0xFFB6C5D0))
+                    }
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFE3EAEF)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(start = 18.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = scheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(scheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.NorthEast,
+                                contentDescription = null,
+                                tint = scheme.onPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.height(1.dp))
+                Column(modifier = Modifier.padding(start = 8.dp, bottom = 10.dp)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = scheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewBar(width: androidx.compose.ui.unit.Dp, color: Color) {
+    Box(
+        modifier = Modifier
+            .width(width)
+            .height(6.dp)
+            .clip(CircleShape)
+            .background(color)
+    )
+}
+
+/** Category tile in the 2x2 grid: label, document count and an arrow. Navy when selected. */
+@Composable
+private fun CategoryTile(
+    label: String,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = MaterialTheme.shapes.large
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .height(148.dp)
+            .softShadow(shape),
+        shape = shape,
+        color = if (selected) scheme.primary else scheme.surface,
+        contentColor = if (selected) scheme.onPrimary else scheme.onSurface,
+        border = if (selected) null else BorderStroke(1.dp, scheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = count.toString(),
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 38.sp)
+                    )
+                    Text(
+                        text = if (count == 1) "document" else "documents",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (selected) scheme.onPrimary.copy(alpha = 0.75f) else scheme.onSurfaceVariant
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) scheme.primaryContainer else scheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.NorthEast,
+                        contentDescription = null,
+                        tint = if (selected) scheme.onPrimaryContainer else scheme.onSurface,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         }
     }
 }

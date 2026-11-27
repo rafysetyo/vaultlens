@@ -1,5 +1,26 @@
 package com.vaultlens.app.ui.screens
 
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import java.util.Locale
+import java.util.Date
+import java.text.SimpleDateFormat
+import androidx.compose.material3.Surface
+import com.vaultlens.app.ui.theme.softShadow
+import com.vaultlens.app.ui.components.PrimaryPillButton
+import com.vaultlens.app.ui.components.CircleIconButton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import com.vaultlens.app.ui.theme.vaultExtras
+import com.vaultlens.app.ui.components.vaultHeader
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -167,175 +188,257 @@ fun DocumentDetailScreen(
     val isAnalyzed = document.analysisStatus == AnalysisStatus.ANALYZED
     val riskCount = document.redFlagsAndRisks.size
 
+    val dateLabel = remember(document.createdAtMillis) {
+        SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(document.createdAtMillis))
+    }
+    val amountLabel = document.financialAmounts.firstOrNull { it.isNotBlank() } ?: "–"
+
     Scaffold(
-        containerColor = scheme.background,
-        topBar = {
-            VaultTopBar(
-                title = "Document",
-                onBack = onBack,
-                actionIcon = Icons.Default.Share,
-                actionDescription = "Share redacted summary",
-                onAction = ::shareSafeSummary
-            )
-        }
+        containerColor = MaterialTheme.vaultExtras.sheet,
+        contentWindowInsets = WindowInsets(0.dp)
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            VaultCard {
-                Column(modifier = Modifier.padding(20.dp)) {
+            // Header: gradient, big title, details chip and the stats pill.
+            val glass = scheme.surface.copy(alpha = 0.4f)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .vaultHeader()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(bottom = 44.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    CircleIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = onBack,
+                        containerColor = glass,
+                        elevated = false
+                    )
+                    CircleIconButton(
+                        icon = Icons.Default.Share,
+                        contentDescription = "Share redacted summary",
+                        onClick = ::shareSafeSummary,
+                        containerColor = glass,
+                        elevated = false
+                    )
+                }
+                Column(
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MonoTag(text = "${document.category.label} · PII hidden")
                     Text(
-                        text = "$folderName · ${document.category.label}",
+                        text = document.title,
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 44.sp, lineHeight = 46.sp),
+                        color = scheme.onBackground
+                    )
+                    Text(
+                        text = "$dateLabel · $statusLabel",
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = document.title,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = scheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(18.dp))
-                    HairlineDivider()
-                    Spacer(modifier = Modifier.height(16.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Bottom
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = document.piiRedactedCount.toString(),
-                                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 38.sp),
-                                color = scheme.onSurface
-                            )
-                            Text(
-                                text = "PII redacted locally",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = scheme.onSurfaceVariant
-                            )
+                        Surface(shape = CircleShape, color = scheme.primaryContainer) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(20.dp), tint = scheme.onPrimaryContainer)
+                                Text(routeLabel, style = MaterialTheme.typography.titleMedium, color = scheme.onPrimaryContainer)
+                            }
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isAnalyzed) riskCount.toString() else "–",
-                                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 38.sp),
-                                color = when {
-                                    !isAnalyzed -> scheme.onSurfaceVariant
-                                    riskCount > 0 -> scheme.error
-                                    else -> scheme.onSurface
-                                }
+                        Spacer(modifier = Modifier.weight(1f))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircleIconButton(
+                                icon = Icons.Default.Download,
+                                contentDescription = "Export JSON",
+                                onClick = ::exportJson,
+                                containerColor = scheme.surface,
+                                elevated = false
                             )
-                            Text(
-                                text = "Risks flagged",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = scheme.onSurfaceVariant
+                            CircleIconButton(
+                                icon = Icons.Default.Share,
+                                contentDescription = "Share summary",
+                                onClick = ::shareSafeSummary,
+                                containerColor = scheme.surface,
+                                elevated = false
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .softShadow(MaterialTheme.shapes.extraLarge),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        color = scheme.surface
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            HeaderStat(
+                                value = document.piiRedactedCount.toString(),
+                                label = "Redacted",
+                                modifier = Modifier.weight(1f)
+                            )
+                            HeaderStat(
+                                value = if (isAnalyzed) riskCount.toString() else "–",
+                                label = "Red flags",
+                                modifier = Modifier.weight(1f)
+                            )
+                            HeaderStat(
+                                value = amountLabel,
+                                label = "Amount",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                jsonExportStatus?.let { status ->
+                    Text(
+                        text = status,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Summary",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = scheme.onBackground
+                    )
+                    Text(
+                        text = document.documentSummary.ifBlank { "No summary yet." },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurfaceVariant
+                    )
+                }
+
+                DetailBlock("Red flags", document.redFlagsAndRisks, danger = true)
+                DetailBlock("Key dates & deadlines", document.keyDatesAndDeadlines)
+                DetailBlock("Financial amounts", document.financialAmounts)
+
+                InferenceTrailCard(document = document)
+
+                if (folders.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SectionCaption(text = "Folder", modifier = Modifier.padding(start = 4.dp))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item {
+                                PillChip(
+                                    selected = document.folderId.isEmpty(),
+                                    onClick = { onChangeFolder(document.id, "") },
+                                    label = { Text("Unfiled") }
+                                )
+                            }
+                            items(folders, key = { it.id }) { folder ->
+                                PillChip(
+                                    selected = document.folderId == folder.id,
+                                    onClick = { onChangeFolder(document.id, folder.id) },
+                                    label = { Text(folder.name) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (document.tags.isNotEmpty()) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        MonoTag(text = routeLabel, inverted = true)
-                        MonoTag(text = statusLabel)
+                        document.tags.forEach { tag -> MonoTag(text = tag) }
                     }
                 }
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                CircleAction(icon = Icons.Default.Download, label = "Export JSON", onClick = ::exportJson)
-                CircleAction(icon = Icons.Default.Share, label = "Share summary", onClick = ::shareSafeSummary)
-            }
-
-            jsonExportStatus?.let { status ->
-                Text(
-                    text = status,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
+                DetailBlock(
+                    "Local redaction log",
+                    document.redactionLog.map { "${it.entityType}  →  ${it.placeholder}\n${it.engine}" },
+                    monospace = true
                 )
-            }
 
-            InferenceTrailCard(document = document)
+                PrimaryPillButton(
+                    text = "Share redacted summary",
+                    onClick = ::shareSafeSummary
+                )
 
-            if (folders.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SectionCaption(text = "Folder", modifier = Modifier.padding(start = 4.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        item {
-                            PillChip(
-                                selected = document.folderId.isEmpty(),
-                                onClick = { onChangeFolder(document.id, "") },
-                                label = { Text("Unfiled") }
-                            )
-                        }
-                        items(folders, key = { it.id }) { folder ->
-                            PillChip(
-                                selected = document.folderId == folder.id,
-                                onClick = { onChangeFolder(document.id, folder.id) },
-                                label = { Text(folder.name) }
-                            )
-                        }
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = scheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "Original text never leaves this device",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant
+                    )
                 }
-            }
-
-            if (document.tags.isNotEmpty()) {
-                VaultCard {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        SectionCaption(text = "Tags")
-                        Spacer(modifier = Modifier.height(12.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            document.tags.forEach { tag -> MonoTag(text = tag) }
-                        }
-                    }
-                }
-            }
-
-            DetailBlock("Summary", listOf(document.documentSummary))
-            DetailBlock("Key dates & deadlines", document.keyDatesAndDeadlines)
-            DetailBlock("Financial amounts", document.financialAmounts)
-            DetailBlock("Red flags & risks", document.redFlagsAndRisks, danger = true)
-            DetailBlock(
-                "Local redaction log",
-                document.redactionLog.map { "${it.entityType}  →  ${it.placeholder}\n${it.engine}" },
-                monospace = true
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = scheme.onSurfaceVariant,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = "Original text never leaves this device",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant
-                )
             }
         }
     }
 }
 
+@Composable
+private fun HeaderStat(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color = Color(0xFF2C6E8E)
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineMedium,
+            color = valueColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+    }
+}
+
+/** Titled list. Each line is a soft white row; risk rows get an amber dot like the mockup. */
 @Composable
 private fun DetailBlock(
     title: String,
@@ -345,37 +448,51 @@ private fun DetailBlock(
 ) {
     val visible = lines.filter { it.isNotBlank() }
     val scheme = MaterialTheme.colorScheme
-    val flagged = danger && visible.isNotEmpty()
-    VaultCard {
-        Column(modifier = Modifier.padding(18.dp)) {
-            SectionCaption(
-                text = title,
-                color = if (flagged) scheme.error else scheme.onSurfaceVariant
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = scheme.onBackground
+        )
+        if (visible.isEmpty()) {
+            Text(
+                text = "None detected.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(10.dp))
-            if (visible.isEmpty()) {
-                Text(
-                    "None detected.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = scheme.onSurfaceVariant
-                )
-            } else {
-                visible.forEachIndexed { index, line ->
-                    if (index > 0) {
-                        HairlineDivider(modifier = Modifier.padding(vertical = 10.dp))
-                    }
-                    if (flagged) {
-                        FindingLine(text = line, danger = true)
-                    } else {
-                        Text(
-                            text = line,
-                            style = if (monospace) {
-                                MaterialTheme.typography.labelMedium
-                            } else {
-                                MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
-                            },
-                            color = scheme.onSurface
-                        )
+        } else {
+            visible.forEach { line ->
+                val parts = line.split(Regex(":\\s+|\\s+[—–-]\\s+"), limit = 2)
+                val rowTitle = parts[0].trim()
+                val rowSub = parts.getOrNull(1)?.trim().orEmpty()
+                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        if (danger) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE9A23B))
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (monospace || rowSub.isEmpty()) line else rowTitle,
+                                style = if (monospace) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleMedium,
+                                color = scheme.onSurface
+                            )
+                            if (!monospace && rowSub.isNotEmpty()) {
+                                Text(
+                                    text = rowSub,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = scheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
